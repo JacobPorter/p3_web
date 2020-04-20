@@ -41,6 +41,14 @@
                   <option value="Host">Host HISAT2</option>
                 </select>
               </div>
+	   <div class="appRow">
+          <div class="appField">
+            <label>Predict novel features</label><br>
+            <select data-dojo-attach-point="novel_features" data-dojo-type="dijit/form/Select" name="novel_features" style="width:300px" required="true" data-dojo-props="intermediateChanges:true,missingMessage:'Name must be provided for folder',trim:true,placeHolder:'MySubFolder'">
+              <option value="False">False</option>
+              <option value="True">True</option>
+            </select>
+          </div>
               <div class="appRow">
                 <div class="appField">
                   <label>Target Genome</label><br>
@@ -58,7 +66,7 @@
             </div>
           </td>
           <td>
-            <div id="conditionbox" class="appBox appShadow" style="min-height: 217px; height:auto; width:330px">
+            <div id="conditionbox" class="appBox appShadow" style="min-height: 267px; height:auto; width:330px">
               <div class="headerrow">
                 <label class="appBoxLabel">Groups/Conditions</label>
                 <div name="groups-conditions" class="infobox iconbox infobutton tooltipinfo">

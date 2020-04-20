@@ -56,7 +56,7 @@ define([
       this.pairToAttachPt1 = { read1: null, read2: null };
       this.pairConditionToAttachPt = { read1: null, read2: null, condition_paired: ['condition'] };
       this.advPairToAttachPt = { interleaved: null, insert_size_mean: null, insert_size_stdev: null };
-      this.paramToAttachPt = { output_path: null, output_file: null, recipe: null };
+      this.paramToAttachPt = { output_path: null, output_file: null, recipe: null, novel_features: null };
       this.singleToAttachPt = { read: null };
       this.singleConditionToAttachPt = { read: null, condition_single: ['condition'] };
       this.srrToAttachPt = { srr_accession: null };
@@ -91,6 +91,7 @@ define([
       this.emptyTable(this.libsTable, this.startingRows, 4);
       this.emptyTable(this.condTable, this.initConditions, 3);
       this.emptyTable(this.contrastTable, this.initContrasts, 5);
+
 
       // adjust validation for each of the attach points associated with read files
       Object.keys(this.pairToAttachPt1).concat(Object.keys(this.singleToAttachPt)).forEach(lang.hitch(this, function (attachname) {
@@ -128,6 +129,8 @@ define([
       this.condition_paired.set('disabled', !design_status);
       this.contrast_cd1.set('disabled', !this.contrastEnabled());
       this.contrast_cd2.set('disabled', !this.contrastEnabled());
+      this.novel_features.set('disabled', design_status);
+      this.novel_features.set('disabled', this.contrastEnabled());
       if (!design_status) { // design status not enabled
         // this.block_condition.show();
         this.numCondWidget.set('value', Number(1));
@@ -140,6 +143,7 @@ define([
       }
       else {
         // this.block_condition.hide();
+        this.novel_features.set('value', 'False')
         this.numCondWidget.set('value', Number(this.addedCond.counter));
         this.destroyLib({}, false, 'design');
         domClass.remove(this.condTable, 'disabled');
