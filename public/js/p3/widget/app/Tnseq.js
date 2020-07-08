@@ -50,7 +50,7 @@ define([
       this.pairToAttachPt1 = { read1: null, read2: null };
       this.pairConditionToAttachPt = { read1: null, read2: null, condition_paired: ['condition'] };
       this.advPairToAttachPt = { interleaved: null, insert_size_mean: null, insert_size_stdev: null };
-      this.paramToAttachPt = { output_path: null, output_file: null, recipe: null };
+      this.paramToAttachPt = { output_path: null, output_file: null, recipe: null, transposon: null, protocol: null };
       this.singleToAttachPt = { read: null };
       this.singleConditionToAttachPt = { read: null, condition_single: ['condition'] };
       this.conditionToAttachPt = { condition: ['condition', 'id', 'label'] };
