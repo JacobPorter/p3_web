@@ -50,7 +50,7 @@ define([
       this.pairToAttachPt1 = { read1: null, read2: null };
       this.pairConditionToAttachPt = { read1: null, read2: null, condition_paired: ['condition'] };
       this.advPairToAttachPt = { interleaved: null, insert_size_mean: null, insert_size_stdev: null };
-      this.paramToAttachPt = { output_path: null, output_file: null, recipe: null, transposon: null, protocol: null };
+      this.paramToAttachPt = { output_path: null, output_file: null, recipe: null, transposon: null, protocol: null, primer: null };
       this.singleToAttachPt = { read: null };
       this.singleConditionToAttachPt = { read: null, condition_single: ['condition'] };
       this.conditionToAttachPt = { condition: ['condition', 'id', 'label'] };
@@ -93,6 +93,50 @@ define([
       this.updateConditionStore(treatment, false);
       this.addedCond.counter = 2;
 
+      // Turn on advanced rows.
+      this.advrow.turnedOn = (this.advrow.style.display != 'none');
+      on(this.advanced, 'click', lang.hitch(this, function () {
+        this.advrow.turnedOn = (this.advrow.style.display != 'none');
+        if (!this.advrow.turnedOn) {
+          this.advrow.turnedOn = true;
+          this.advrow.style.display = 'block';
+          this.advicon.className = 'fa icon-caret-left fa-1';
+        }
+        else {
+          this.advrow.turnedOn = false;
+          this.advrow.style.display = 'none';
+          this.advicon.className = 'fa icon-caret-down fa-1';
+        }
+      }));
+//      this.advrow2.turnedOn = (this.advrow2.style.display != 'none');
+//      on(this.advanced2, 'click', lang.hitch(this, function () {
+//        this.advrow2.turnedOn = (this.advrow2.style.display != 'none');
+//        if (!this.advrow2.turnedOn) {
+//          this.advrow2.turnedOn = true;
+//          this.advrow2.style.display = 'block';
+//          this.advicon2.className = 'fa icon-caret-left fa-1';
+//        }
+//        else {
+//          this.advrow2.turnedOn = false;
+//          this.advrow2.style.display = 'none';
+//          this.advicon2.className = 'fa icon-caret-down fa-1';
+//        }
+//      }));
+//      this.advrow3.turnedOn = (this.advrow3.style.display != 'none');
+//      on(this.advanced3, 'click', lang.hitch(this, function () {
+//        this.advrow3.turnedOn = (this.advrow3.style.display != 'none');
+//        if (!this.advrow3.turnedOn) {
+//          this.advrow3.turnedOn = true;
+//          this.advrow3.style.display = 'block';
+//          this.advicon3.className = 'fa icon-caret-left fa-1';
+//        }
+//        else {
+//          this.advrow3.turnedOn = false;
+//          this.advrow3.style.display = 'none';
+//          this.advicon3.className = 'fa icon-caret-down fa-1';
+//        }
+//      }));
+      
 
       // adjust validation for each of the attach points associated with read files
       Object.keys(this.pairToAttachPt1).concat(Object.keys(this.singleToAttachPt)).forEach(lang.hitch(this, function (attachname) {
