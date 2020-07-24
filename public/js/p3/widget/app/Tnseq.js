@@ -94,20 +94,20 @@ define([
       this.addedCond.counter = 2;
 
       // Turn on advanced rows.
-      this.advrow.turnedOn = (this.advrow.style.display != 'none');
-      on(this.advanced, 'click', lang.hitch(this, function () {
-        this.advrow.turnedOn = (this.advrow.style.display != 'none');
-        if (!this.advrow.turnedOn) {
-          this.advrow.turnedOn = true;
-          this.advrow.style.display = 'block';
-          this.advicon.className = 'fa icon-caret-left fa-1';
-        }
-        else {
-          this.advrow.turnedOn = false;
-          this.advrow.style.display = 'none';
-          this.advicon.className = 'fa icon-caret-down fa-1';
-        }
-      }));
+//      this.advrow.turnedOn = (this.advrow.style.display != 'none');
+//      on(this.advanced, 'click', lang.hitch(this, function () {
+//        this.advrow.turnedOn = (this.advrow.style.display != 'none');
+//        if (!this.advrow.turnedOn) {
+//          this.advrow.turnedOn = true;
+//          this.advrow.style.display = 'block';
+//          this.advicon.className = 'fa icon-caret-left fa-1';
+//        }
+//        else {
+//          this.advrow.turnedOn = false;
+//          this.advrow.style.display = 'none';
+//          this.advicon.className = 'fa icon-caret-down fa-1';
+//        }
+//      }));
 //      this.advrow2.turnedOn = (this.advrow2.style.display != 'none');
 //      on(this.advanced2, 'click', lang.hitch(this, function () {
 //        this.advrow2.turnedOn = (this.advrow2.style.display != 'none');
