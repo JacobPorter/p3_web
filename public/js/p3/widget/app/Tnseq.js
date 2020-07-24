@@ -159,9 +159,10 @@ define([
       // this.read2.set('value',"/" +  window.App.user.id +"/home/");
       // this.single_end_libs.set('value',"/" +  window.App.user.id +"/home/");
       // this.output_path.set('value',"/" +  window.App.user.id +"/home/");
+      this.primer.set('disabled', true);
+      this.primer.set('value', '');
       this._started = true;
     },
-
 
     onRecipeChange: function () {
       var strategy = this.recipe.get('value');
@@ -173,7 +174,38 @@ define([
       }
       this.onDesignToggle();
     },
+
+    onProtocolChange: function () {
+      var protocol = this.protocol.get('value');
+      if (protocol == 'sassetti') {
+	  this.transposon.set('value', 'himar1');
+      } else if (protocol == 'tn5') {
+	  this.transposon.set('value', 'tn5');
+      } else {
+	  this.transposon.set('value', 'blank');
+      }
+    },
+    
+    onTransposonChange: function () {
+      var transposon = this.transposon.get('value');
+      if (transposon == 'custom') {
+	  this.primer.set('disabled', false);
+	  this.primer.set('value', '');
+      } else if (transposon == 'himar1') {
+	  this.primer.set('disabled', true);
+	  this.primer.set('value', 'ACTTATCAGCCAACCTGTTA');
+      } else if (transposon == 'tn5') {
+	  this.primer.set('disabled', true);
+	  this.primer.set('value', 'TAAGAGACAG');
+      } else {
+	  this.primer.set('disabled', true);
+	  this.primer.set('value', '');
+      }
+    },
+
     onDesignToggle: function () {
+      // console.log(this.transposon.get('value'));
+      // this.transposon.set('value', this.transposon.get('value'));
       var disable = !this.exp_design.checked;
       // this.condition.set("disabled", disable);
       this.condition_single.set('disabled', disable);
