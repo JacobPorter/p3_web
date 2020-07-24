@@ -159,8 +159,9 @@ define([
       // this.read2.set('value',"/" +  window.App.user.id +"/home/");
       // this.single_end_libs.set('value',"/" +  window.App.user.id +"/home/");
       // this.output_path.set('value',"/" +  window.App.user.id +"/home/");
-      this.primer.set('disabled', true);
-      this.primer.set('value', '');
+      //this.primer.set('disabled', true);
+      //this.primer.set('value', '');
+      this.onTransposonChange();
       this._started = true;
     },
 
