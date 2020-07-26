@@ -56,15 +56,24 @@
                 <select data-dojo-type="dijit/form/Select" name="transposon" data-dojo-attach-point="transposon" style="width:100%" required="true" data-dojo-attach-event="onChange:onTransposonChange" data-dojo-props="intermediateChanges:true,missingMessage:'Name Must be provided for Folder',trim:true,placeHolder:'MySubFolder'">
                   <option value="himar1">himar1</option>
                   <option value="tn5">tn5</option>
-                  <option value="blank">blank</option>
-                  <option value="custom">custom</option>
                 </select>
                 </div>
               </div>
               </div>
               <div class="appRow" style="text-align:left;">
                   <label class="paramlabel" style="text-align:left">Primer</label><br>
-                  <div data-dojo-type="dijit/form/ValidationTextBox" name="primer" data-dojo-attach-point="primer" style="width:300px" required="false" />
+                  <div class="appRowSegment" style="text-align:left; width:12%">
+                  <div style="margin-left:0px" data-dojo-attach-point="primer_switch" class="onoffswitch">
+                  <input type="checkbox" value="off" name="onoffswitch" class="onoffswitch-checkbox" data-dojo-attach-point="custom_primer">
+                  <label class="onoffswitch-label">
+                    <span class="onoffswitch-inner"></span>
+                    <span class="onoffswitch-switch"></span>
+                  </label>
+                </div>
+                </div>
+                <div class="appRowSegment" style="text-align:left; width:72%">
+                <div data-dojo-type="dijit/form/ValidationTextBox" name="primer" data-dojo-attach-point="primer" style="width:220px" required="false" />
+                </div>
                 </div>
                 </div>
               <div class="appRow">
