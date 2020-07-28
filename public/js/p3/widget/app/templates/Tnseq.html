@@ -61,8 +61,18 @@
               </div>
               </div>
               <div class="appRow" style="text-align:left;">
-                  <label class="paramlabel" style="text-align:left">Primer</label><br>
-                  <div class="appRowSegment" style="text-align:left; width:12%">
+                  <label class="paramlabel" style="text-align:left">Primer</label>
+                  <div name="primer_info" class="infobox iconbox infobutton dialoginfo">
+                  <i class="fa icon-info-circle fa" title="The primer must be a DNA string. It is used for trimming."></i>
+                  </div>
+                  <i data-dojo-attach-point="primer_validation_message"></i><br>
+                  <div class="appRowSegment" style="text-align:left; width:18%">
+                  
+                  <button data-dojo-type="dijit/form/ToggleButton" data-dojo-attach-event="onChange:onPrimerDefault" data-dojo-attach-point="custom_primer">
+                  Default
+                  </button>
+                  
+                  <!--
                   <div style="margin-left:0px" data-dojo-attach-point="primer_switch" class="onoffswitch">
                   <input type="checkbox" value="off" name="onoffswitch" class="onoffswitch-checkbox" data-dojo-attach-point="custom_primer">
                   <label class="onoffswitch-label">
@@ -70,9 +80,13 @@
                     <span class="onoffswitch-switch"></span>
                   </label>
                 </div>
+                -->
+                
+                <!-- data-dojo-attach-event="onChange:onCustomPrimer" -->
+                
                 </div>
-                <div class="appRowSegment" style="text-align:left; width:72%">
-                <div data-dojo-type="dijit/form/ValidationTextBox" name="primer" data-dojo-attach-point="primer" style="width:220px" required="false" />
+                <div class="appRowSegment" style="text-align:left; width:70%">
+                <div data-dojo-type="dijit/form/ValidationTextBox" name="primer" data-dojo-props="regExp:'[A|C|T|G|N|a|c|t|g|n]*', invalidMessage:'Must be a DNA string.'" data-dojo-attach-point="primer" style="width:210px" required="false" />
                 </div>
                 </div>
                 </div>

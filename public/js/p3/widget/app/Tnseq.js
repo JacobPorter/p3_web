@@ -2,14 +2,14 @@ define([
   'dojo/_base/declare', 'dijit/_WidgetBase', 'dojo/on',
   'dojo/dom-class',
   'dojo/text!./templates/Tnseq.html', './AppBase', 'dojo/dom-construct',
-  'dojo/_base/Deferred', 'dojo/aspect', 'dojo/_base/lang', 'dojo/domReady!', 'dijit/form/NumberTextBox',
+  'dojo/_base/Deferred', 'dojo/aspect', 'dojo/_base/lang', 'dojo/domReady!', 'dijit/form/NumberTextBox', 'dijit/form/ToggleButton',
   'dojo/query', 'dojo/dom', 'dijit/popup', 'dijit/Tooltip', 'dijit/Dialog', 'dijit/TooltipDialog',
   'dojo/NodeList-traverse', '../../WorkspaceManager', 'dojo/store/Memory', 'dojox/widget/Standby'
 ], function (
   declare, WidgetBase, on,
   domClass,
   Template, AppBase, domConstruct,
-  Deferred, aspect, lang, domReady, NumberTextBox,
+  Deferred, aspect, lang, domReady, NumberTextBox, ToggleButton,
   query, dom, popup, Tooltip, Dialog, TooltipDialog,
   children, WorkspaceManager, Memory, Standby
 ) {
@@ -163,12 +163,14 @@ define([
       // this.output_path.set('value',"/" +  window.App.user.id +"/home/");
       this.primer.set('disabled', true);
       this.onTransposonChange();
-      on(this.primer_switch, 'click', lang.hitch(this, function (evt) {
-        this.custom_primer.checked = !this.custom_primer.checked;
-        this.custom_primer.value = this.custom_primer.checked ? 'on' : 'off';
-        this.onDesignToggle();
-        this.onTransposonChange();
-      }));
+      
+//      on(this.primer_switch, 'click', lang.hitch(this, function (evt) {
+//        this.custom_primer.checked = !this.custom_primer.checked;
+//        this.custom_primer.value = this.custom_primer.checked ? 'on' : 'off';
+//        this.onDesignToggle();
+//        this.onTransposonChange();
+//      }));
+      
       this._started = true;
     },
 
@@ -202,16 +204,44 @@ define([
         } else if (transposon == 'tn5') {
           this.primer.set('value', 'TAAGAGACAG');
         } else {
-          this.primer.set('value', '');
+          this.primer.set('value', 'err');
         }
       }
     },
+    
+//    onCustomPrimer: function () {
+//        var primer_value = this.primer.get('value').toUpperCase();
+//        this.primer.set('value', primer_value);
+//        var good = true;
+//        for (var i = 0; i < primer_value.length; i++) {
+//            var c = primer_value.charAt(i);
+//            if (c != 'A' && c != 'C' && c != 'T' && c != 'G' && c != 'N') {
+//                this.primer_validation_message.innerHTML = '  Primer must be a DNA string.';
+//                good = false;
+//                break;
+//            }
+//          }
+//        if (good) {
+//            this.primer_validation_message.innerHTML = "";
+//        }
+//        return good;
+//    },
 
+    onPrimerDefault: function () {
+        var default_checked = this.custom_primer.get('checked');
+        if (default_checked) {
+            this.custom_primer.set('label', 'Custom');
+        } else {
+            this.custom_primer.set('label', 'Default');
+        }
+        this.onDesignToggle();
+        this.onTransposonChange();
+    },
+    
     onDesignToggle: function () {
-      // console.log(this.transposon.get('value'));
-      // this.transposon.set('value', this.transposon.get('value'));
       var disable = !this.exp_design.checked;
       this.primer.set('disabled', !this.custom_primer.checked);
+      // this.onCustomPrimer();
       // this.condition.set("disabled", disable);
       this.condition_single.set('disabled', disable);
       this.condition_paired.set('disabled', disable);
@@ -248,6 +278,8 @@ define([
       var singleList = this.libraryStore.query({ type: 'single' });
       var condLibs = [];
       var allLibs = {};
+      //var primer_value = this.primer.get('value').toUpperCase();
+      //this.primer.set('value', primer_value);
       this.ingestAttachPoints(this.paramToAttachPt, assembly_values);
       var defaultCond = 'control';
       // for (var k in values) {
@@ -325,9 +357,7 @@ define([
       else {
         assembly_values.contrasts = [['control']];
       }
-
       return assembly_values;
-
     },
     // gets values from dojo attach points listed in input_ptsi keys.
     // aliases them to input_pts values.  validates all values present if req
@@ -352,6 +382,9 @@ define([
           }
           // cur_value=this[attachname].searchBox.get('value');
           // incomplete=((cur_value.replace(/^.*[\\\/]/, '')).length==0);
+        }
+        else if (attachname == 'primer') {
+            cur_value = this[attachname].value.toUpperCase();
         }
         else if (attachname == 'condition') {
           cur_value = this[attachname].displayedValue;// ? "/_uuid/"+this[attachname].searchBox.value : "";
