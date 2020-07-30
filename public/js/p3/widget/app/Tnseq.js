@@ -197,7 +197,7 @@ define([
     },
 
     onTransposonChange: function () {
-      if (!this.custom_primer.checked) {
+      if (this.primer_switch.get('value') == 'Default') {
         var transposon = this.transposon.get('value');
         if (transposon == 'himar1') {
           this.primer.set('value', 'ACTTATCAGCCAACCTGTTA');
@@ -209,38 +209,20 @@ define([
       }
     },
     
-//    onCustomPrimer: function () {
-//        var primer_value = this.primer.get('value').toUpperCase();
-//        this.primer.set('value', primer_value);
-//        var good = true;
-//        for (var i = 0; i < primer_value.length; i++) {
-//            var c = primer_value.charAt(i);
-//            if (c != 'A' && c != 'C' && c != 'T' && c != 'G' && c != 'N') {
-//                this.primer_validation_message.innerHTML = '  Primer must be a DNA string.';
-//                good = false;
-//                break;
-//            }
-//          }
-//        if (good) {
-//            this.primer_validation_message.innerHTML = "";
-//        }
-//        return good;
-//    },
-
     onPrimerDefault: function () {
-        var default_checked = this.custom_primer.get('checked');
-        if (default_checked) {
-            this.custom_primer.set('label', 'Custom');
+        var value = this.primer_switch.get('value');
+        if (value == 'Default') {
+            this.primer.set('disabled', true);
+            this.onTransposonChange();
+        } else if (value == 'Custom') {
+            this.primer.set('disabled', false);
         } else {
-            this.custom_primer.set('label', 'Default');
+            this.primer.set('disabled', true);
+            this.primer.set('value', '');
         }
-        this.onDesignToggle();
-        this.onTransposonChange();
     },
     
     onDesignToggle: function () {
-      var disable = !this.exp_design.checked;
-      this.primer.set('disabled', !this.custom_primer.checked);
       // this.onCustomPrimer();
       // this.condition.set("disabled", disable);
       this.condition_single.set('disabled', disable);
