@@ -313,6 +313,9 @@ define([
         else if (attachname == 'primer') {
             cur_value = this[attachname].value.toUpperCase();
         }
+        else if (attachname == 'recipe' && this.protocol.get('value') == 'tn5' && this[attachname].value == 'gumbel') {
+            cur_value = 'tn5gaps';
+        }
         else if (attachname == 'condition') {
           cur_value = this[attachname].displayedValue;// ? "/_uuid/"+this[attachname].searchBox.value : "";
           // cur_value="/_uuid/"+this[attachname].searchBox.value;
