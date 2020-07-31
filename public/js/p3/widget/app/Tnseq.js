@@ -156,22 +156,23 @@ define([
         }
       }
     },
-    
+
     onPrimerTrimming: function () {
-        var value = this.primer_trimming.get('value');
-        if (value == 'Default') {
-            this.primer.set('disabled', true);
-            this.onTransposonChange();
-        } else if (value == 'Custom') {
-            this.primer.set('disabled', false);
-        } else {
-            this.primer.set('disabled', true);
-            this.primer.set('value', '');
-        }
+      var value = this.primer_trimming.get('value');
+      if (value == 'Default') {
+        this.primer.set('disabled', true);
+        this.onTransposonChange();
+      } else if (value == 'Custom') {
+        this.primer.set('disabled', false);
+      } else {
+        this.primer.set('disabled', true);
+        this.primer.set('value', '');
+      }
     },
-    
+
     onDesignToggle: function () {
       // this.condition.set("disabled", disable);
+      var disable = !this.exp_design.checked;
       this.condition_single.set('disabled', disable);
       this.condition_paired.set('disabled', disable);
       if (disable) {
@@ -311,10 +312,10 @@ define([
           // incomplete=((cur_value.replace(/^.*[\\\/]/, '')).length==0);
         }
         else if (attachname == 'primer') {
-            cur_value = this[attachname].value.toUpperCase();
+          cur_value = this[attachname].value.toUpperCase();
         }
         else if (attachname == 'recipe' && this.protocol.get('value') == 'tn5' && this[attachname].value == 'gumbel') {
-            cur_value = 'tn5gaps';
+          cur_value = 'tn5gaps';
         }
         else if (attachname == 'condition') {
           cur_value = this[attachname].displayedValue;// ? "/_uuid/"+this[attachname].searchBox.value : "";
