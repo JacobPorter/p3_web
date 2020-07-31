@@ -2,14 +2,14 @@ define([
   'dojo/_base/declare', 'dijit/_WidgetBase', 'dojo/on',
   'dojo/dom-class',
   'dojo/text!./templates/Tnseq.html', './AppBase', 'dojo/dom-construct',
-  'dojo/_base/Deferred', 'dojo/aspect', 'dojo/_base/lang', 'dojo/domReady!', 'dijit/form/NumberTextBox', 'dijit/form/ToggleButton',
+  'dojo/_base/Deferred', 'dojo/aspect', 'dojo/_base/lang', 'dojo/domReady!', 'dijit/form/NumberTextBox',
   'dojo/query', 'dojo/dom', 'dijit/popup', 'dijit/Tooltip', 'dijit/Dialog', 'dijit/TooltipDialog',
   'dojo/NodeList-traverse', '../../WorkspaceManager', 'dojo/store/Memory', 'dojox/widget/Standby'
 ], function (
   declare, WidgetBase, on,
   domClass,
   Template, AppBase, domConstruct,
-  Deferred, aspect, lang, domReady, NumberTextBox, ToggleButton,
+  Deferred, aspect, lang, domReady, NumberTextBox,
   query, dom, popup, Tooltip, Dialog, TooltipDialog,
   children, WorkspaceManager, Memory, Standby
 ) {
