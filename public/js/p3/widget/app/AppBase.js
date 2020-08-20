@@ -372,29 +372,7 @@ define([
     // Use only one xhr.get instance if you can
     // If website times out, can't be reached, allow SRR through.
     // From XML check that you are using run
-    
-    errorSRR: function (error) {
-      console.log("Hello world.");
-      console.log("An unexpected error occurred: " + error);
-    },
-    
-    handleSRR: function (xml_resp, ioargs) {
-      var status = ioargs.xhr.status;
-      console.log(status);
-      try {
-        //var xresp = xmlParser.parse(xml_resp).documentElement;
-        //title = xresp.children[0].childNodes[3].children[1].childNodes[0].innerHTML;
-        //console.log(xresp);
-        title = xml_resp.children[0].children[0].childNodes[3].children[1].childNodes[0].innerHTML;
-      }
-      catch (e) {
-        //console.log(xresp);
-        console.log(xml_resp);
-        console.error('could not get title from SRA record');
-      }
-      this.onAddSRRHelper(title);
-    },
-    
+
     onAddSRR: function () {
       var accession = this.srr_accession.get('value');
       if (!accession.match(/^[a-z]{3}[0-9]+$/i)) {
@@ -406,19 +384,25 @@ define([
         this.srr_accession_validation_message.innerHTML = ' Validating ' + accession + ' ...';
         var title = '';
         try {
-          xhr.get(lang.replace(this.srrValidationUrl2, [accession]), {handleAs: 'xml', headers: { 'X-Requested-With': null }, timeout: 1000 })
+          xhr.get(lang.replace(this.srrValidationUrl2, [accession]), {sync: true, handleAs: 'xml', headers: { 'X-Requested-With': null }, timeout: 10000 })
           .then(lang.hitch(this, function (xml_resp) {
             try {
               //var xresp = xmlParser.parse(xml_resp).documentElement;
               //title = xresp.children[0].childNodes[3].children[1].childNodes[0].innerHTML;
               title = xml_resp.children[0].children[0].childNodes[3].children[1].childNodes[0].innerHTML;
-            }
+              }
             catch (e) {
-              // console.log(xml_resp);
-              console.error('could not get title from SRA record');
-            }
+              console.log(xml_resp);
+              console.error('Could not get title from SRA record.  Error: ' + e);
+              }
             this.onAddSRRHelper(title);
-          }
+          }),
+          
+          lang.hitch(this, 
+          function (err) {
+            var status = err.response.status;
+            console.log(err);
+          },
           ));
         } catch (e) {
           console.error(e);
