@@ -325,7 +325,7 @@ define([
       return true;
     },
 
-    // If website times out, can't be reached, allow SRR through.
+    // TODO: If website times out, can't be reached, allow SRR through.?
     onAddSRR: function () {
       var accession = this.srr_accession.get('value');
       var isrun = false;
@@ -333,7 +333,7 @@ define([
         this.srr_accession_validation_message.innerHTML = ' Your input is not valid.<br>Hint: only one SRR at a time.';
       }
       else {
-        // SRR5121082, ERR3827346
+        // SRR5121082, ERR3827346, SRX981334
         this.srr_accession.set('disabled', true);
         this.srr_accession_validation_message.innerHTML = ' Validating ' + accession + ' ...';
         var title = '';
