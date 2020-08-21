@@ -25,8 +25,8 @@ define([
     activeWorkspacePath: '',
     help_doc: null,
     activeUploads: [],
-    srrValidationUrl: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?retmax=1&db=sra&field=accn&term={0}&retmode=json',
-    srrValidationUrl2: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?retmax=10&db=sra&id={0}', // the data we need is in xml string no matter what.
+    // srrValidationUrl: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?retmax=1&db=sra&field=accn&term={0}&retmode=json',
+    srrValidationUrl: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?retmax=10&db=sra&id={0}', // the data we need is in xml string no matter what.
 
     postMixInProperties: function () {
       // use AppLogin.html when requireAuth & user is not logged in
@@ -293,8 +293,9 @@ define([
         }
       }
     },
-    
+
     onAddSRRHelper: function (title) {
+      // Used for most services.
       var lrec = { _type: 'srr_accession', title: title };
       var chkPassed = this.ingestAttachPoints(['srr_accession'], lrec);
       if (chkPassed) {
@@ -307,21 +308,28 @@ define([
       this.srr_accession.set('disabled', false);
       return true;
     },
-    
+
     onAddSRRHelperConditions: function (title) {
+      // Used for Rnaseq and FastqUtil.  This could be generalized to fit into onAddSRRHelper.
       console.log('Create New Row', domConstruct);
       var lrec = { type: 'srr_accession', title: title };
       this.srr_accession.set('state', '');
+
       try {
         var toIngest = this.exp_design.checked ? this.srrConditionToAttachPt : this.srrToAttachPt;
       } catch (e) {
-        var toIngest = this.srrToAttachPt;
+        try {
+          var toIngest = this.srrToAttachPt;
+        } catch (e) {
+          var toIngest = ['srr_accession'];
+        }
       }
       var chkPassed = this.ingestAttachPoints(toIngest, lrec);
       if (chkPassed) {
         var infoLabels = {
           title: { label: 'Title', value: 1 }
         };
+
         var tr = this.libsTable.insertRow(0);
         lrec.row = tr;
         // this code needs to be refactored to use addLibraryRow like the Assembly app
@@ -359,6 +367,7 @@ define([
         lrec.handle = handle;
         this.createLib(lrec);
         this.increaseRows(this.libsTable, this.addedLibs, this.numlibs);
+
         this.srr_accession_validation_message.innerHTML = '';
         this.srr_accession.set('disabled', false);
       }
@@ -368,84 +377,73 @@ define([
       return true;
     },
 
-    // Improve reg expr.  three alpha char followed by numbers
-    // Use only one xhr.get instance if you can
     // If website times out, can't be reached, allow SRR through.
-    // From XML check that you are using run
-
     onAddSRR: function () {
       var accession = this.srr_accession.get('value');
+      var isrun = false;
       if (!accession.match(/^[a-z]{3}[0-9]+$/i)) {
         this.srr_accession_validation_message.innerHTML = ' Your input is not valid.<br>Hint: only one SRR at a time.';
       }
       else {
-        // SRR5121082
+        // SRR5121082, ERR3827346
         this.srr_accession.set('disabled', true);
         this.srr_accession_validation_message.innerHTML = ' Validating ' + accession + ' ...';
         var title = '';
         try {
-          xhr.get(lang.replace(this.srrValidationUrl2, [accession]), {sync: true, handleAs: 'xml', headers: { 'X-Requested-With': null }, timeout: 10000 })
-          .then(lang.hitch(this, function (xml_resp) {
-            try {
-              //var xresp = xmlParser.parse(xml_resp).documentElement;
-              //title = xresp.children[0].childNodes[3].children[1].childNodes[0].innerHTML;
-              title = xml_resp.children[0].children[0].childNodes[3].children[1].childNodes[0].innerHTML;
+          xhr.get(lang.replace(this.srrValidationUrl, [accession]),
+            {
+              sync: false, handleAs: 'xml', headers: { 'X-Requested-With': null }, timeout: 15000
+            }).then(
+            lang.hitch(this, function (xml_resp) {
+              try {
+                title = xml_resp.children[0].children[0].childNodes[3].children[1].childNodes[0].innerHTML;
               }
-            catch (e) {
-              console.log(xml_resp);
-              console.error('Could not get title from SRA record.  Error: ' + e);
+              catch (e) {
+                console.log(xml_resp);
+                console.error('Could not get title from SRA record.  Error: ' + e);
               }
-            this.onAddSRRHelper(title);
-          }),
-          
-          lang.hitch(this, 
-          function (err) {
-            var status = err.response.status;
-            console.log(err);
-          },
-          ));
+              try {
+                xml_resp.children[0].children[0].childNodes.forEach(function (item) {
+                  if (item.nodeName == 'RUN_SET') {
+                    item.childNodes.forEach(function (currentValue) {
+                      if (accession == currentValue.attributes.accession.nodeValue) {
+                        isrun = true;
+                      }
+                    });
+                  }
+                });
+              }
+              catch (e) {
+                console.log(xml_resp);
+                console.error('Could not get run id from SRA record.  Error: ' + e);
+              }
+              if (isrun) {
+                this.onAddSRRHelper(title);
+              } else {
+                this.srr_accession.set('disabled', false);
+                this.srr_accession_validation_message.innerHTML = ' The accession is not a run id.';
+              }
+            }),
+            lang.hitch(this,
+              function (err) {
+                var status = err.response.status;
+                if (status >= 400 && status < 500) {
+                  // NCBI eutils gives error code 400 when the accession does not exist.
+                  this.srr_accession.set('disabled', false);
+                  this.srr_accession_validation_message.innerHTML = ' Your input ' + accession + ' is not valid';
+                } else {
+                  throw new Error('Unhandled SRA validation error.');
+                }
+              })
+          );
         } catch (e) {
           console.error(e);
           this.srr_accession.set('disabled', false);
-          this.srr_accession_validation_message.innerHTML = ' Your input ' + accession + ' is not valid';
-          this.srr_accession.set('value', '');
+          this.srr_accession_validation_message.innerHTML = ' Something went wrong.';
+          // this.srr_accession.set('value', '');
         }
       }
-    },
-
-//        xhr.get(lang.replace(this.srrValidationUrl, [accession]), { headers: { 'X-Requested-With': null } })
-//          .then(lang.hitch(this, function (json_resp) {
-//            var resp = JSON.parse(json_resp);
-//            try {
-//              var chkPassed = resp['esearchresult']['count'] > 0;
-//              var uid = resp['esearchresult']['idlist']['0'];
-//              var title = '';
-//              if (chkPassed) {
-//                xhr.get(lang.replace(this.srrValidationUrl2, [uid]), { headers: { 'X-Requested-With': null } })
-//                  .then(lang.hitch(this, function (xml_resp) {
-//                    try {
-//                      var xresp = xmlParser.parse(xml_resp).documentElement;
-//                      title = xresp.children[0].childNodes[3].children[1].childNodes[0].innerHTML;
-//                    }
-//                    catch (e) {
-//                      console.log(xresp);
-//                      console.error('could not get title from SRA record');
-//                    }
-//                    this.onAddSRRHelper(title);
-//                  }));
-//              }
-//              else {
-//                throw new Error('No ids returned from esearch');
-//              }
-//            } catch (e) {
-//              console.error(e);
-//              this.srr_accession.set('disabled', false);
-//              this.srr_accession_validation_message.innerHTML = ' Your input ' + accession + ' is not valid';
-//              this.srr_accession.set('value', '');
-//            }
-//          }));
-//      }
-//    }
+    }
 
   });
 });
