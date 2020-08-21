@@ -375,12 +375,12 @@ define([
               function (err) {
                 var status = err.response.status;
                 this.srr_accession.set('disabled', false);
-//                console.log(status);
-//                console.log(err);
+                //                console.log(status);
+                //                console.log(err);
                 if (status >= 400 && status < 500) {
                   // NCBI eutils gives error code 400 when the accession does not exist.
                   this.srr_accession_validation_message.innerHTML = ' Your input ' + accession + ' is not valid';
-                } else if (err.message.startsWith("Timeout exceeded")) {
+                } else if (err.message.startsWith('Timeout exceeded')) {
                   this.onAddSRRHelper(title);
                   this.srr_accession_validation_message.innerHTML = ' Timeout exceeded.';
                 } else {
