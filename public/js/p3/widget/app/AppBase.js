@@ -325,7 +325,6 @@ define([
       return true;
     },
 
-    // TODO: If website times out, can't be reached, allow SRR through.?
     onAddSRR: function () {
       var accession = this.srr_accession.get('value');
       var isrun = false;
@@ -375,10 +374,15 @@ define([
             lang.hitch(this,
               function (err) {
                 var status = err.response.status;
+                this.srr_accession.set('disabled', false);
+//                console.log(status);
+//                console.log(err);
                 if (status >= 400 && status < 500) {
                   // NCBI eutils gives error code 400 when the accession does not exist.
-                  this.srr_accession.set('disabled', false);
                   this.srr_accession_validation_message.innerHTML = ' Your input ' + accession + ' is not valid';
+                } else if (err.message.startsWith("Timeout exceeded")) {
+                  this.onAddSRRHelper(title);
+                  this.srr_accession_validation_message.innerHTML = ' Timeout exceeded.';
                 } else {
                   throw new Error('Unhandled SRA validation error.');
                 }
