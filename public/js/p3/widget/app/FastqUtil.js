@@ -42,7 +42,6 @@ define([
     },
 
     constructor: function () {
-      this.onAddSRRHelper = this.onAddSRRHelperConditions;
       this.addedLibs = { counter: 0 };
       this.addedCond = { counter: 0 };
       // these objects map dojo attach points to desired alias for ingestAttachPoint function
@@ -154,6 +153,46 @@ define([
     },
 
     updateSRR: function () {
+    },
+
+    addLibraryRow: function (lrec, infoLabels, mode) {
+      var tr = this.libsTable.insertRow(0);
+      lrec.row = tr;
+      // this code needs to be refactored to use addLibraryRow like the Assembly app
+      var td = domConstruct.create('td', { 'class': 'textcol srrdata', innerHTML: '' }, tr);
+      td.libRecord = lrec;
+      td.innerHTML = "<div class='libraryrow'>" + this.makeLibraryName('srr_accession') + '</div>';
+      this.addLibraryInfo(lrec, infoLabels, tr);
+      var advPairInfo = [];
+      if (lrec.condition) {
+        advPairInfo.push('Condition:' + lrec.condition);
+      }
+      if (advPairInfo.length) {
+        lrec.design = true;
+        var condition_icon = this.getConditionIcon(lrec.condition);
+        var tdinfo = domConstruct.create('td', { 'class': 'iconcol', innerHTML: condition_icon }, tr);
+        new Tooltip({
+          connectId: [tdinfo],
+          label: advPairInfo.join('</br>')
+        });
+      }
+      else {
+        lrec.design = false;
+        var tdinfo = domConstruct.create('td', { innerHTML: '' }, tr);
+      }
+      var td2 = domConstruct.create('td', {
+        'class': 'iconcol',
+        innerHTML: "<i class='fa icon-x fa-1x' />"
+      }, tr);
+      if (this.addedLibs.counter < this.startingRows) {
+        this.libsTable.deleteRow(-1);
+      }
+      var handle = on(td2, 'click', lang.hitch(this, function (evt) {
+        this.destroyLib(lrec, lrec.id, 'id');
+      }));
+      lrec.handle = handle;
+      this.createLib(lrec);
+      this.increaseRows(this.libsTable, this.addedLibs, this.numlibs);
     },
 
     emptyTable: function (target, rowLimit, colNum) {

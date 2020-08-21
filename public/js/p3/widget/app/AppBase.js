@@ -295,85 +295,33 @@ define([
     },
 
     onAddSRRHelper: function (title) {
-      // Used for most services.
-      var lrec = { _type: 'srr_accession', title: title };
-      var chkPassed = this.ingestAttachPoints(['srr_accession'], lrec);
-      if (chkPassed) {
-        var infoLabels = {
-          title: { label: 'Title', value: 1 }
-        };
-        this.addLibraryRow(lrec, infoLabels, 'srrdata');
-      }
-      this.srr_accession_validation_message.innerHTML = '';
-      this.srr_accession.set('disabled', false);
-      return true;
-    },
-
-    onAddSRRHelperConditions: function (title) {
-      // Used for Rnaseq and FastqUtil.  This could be generalized to fit into onAddSRRHelper.
-      console.log('Create New Row', domConstruct);
-      var lrec = { type: 'srr_accession', title: title };
       this.srr_accession.set('state', '');
-
-      try {
+      if (!(typeof this.exp_design === 'undefined')) {
+        // For the Rnaseq service.
         var toIngest = this.exp_design.checked ? this.srrConditionToAttachPt : this.srrToAttachPt;
-      } catch (e) {
-        try {
-          var toIngest = this.srrToAttachPt;
-        } catch (e) {
-          var toIngest = ['srr_accession'];
-        }
+        var lrec = { type: 'srr_accession', title: title };
+        console.log('Create New Row', domConstruct);
+      } else if (!(typeof this.srrToAttachPt === 'undefined')) {
+        // For the FastqUtil service.
+        var toIngest = this.srrToAttachPt;
+        var lrec = { type: 'srr_accession', title: title };
+        console.log('Create New Row', domConstruct);
+      } else {
+        // All other services.
+        var toIngest = ['srr_accession'];
+        var lrec = { _type: 'srr_accession', title: title };
       }
       var chkPassed = this.ingestAttachPoints(toIngest, lrec);
       if (chkPassed) {
         var infoLabels = {
           title: { label: 'Title', value: 1 }
         };
-
-        var tr = this.libsTable.insertRow(0);
-        lrec.row = tr;
-        // this code needs to be refactored to use addLibraryRow like the Assembly app
-        var td = domConstruct.create('td', { 'class': 'textcol srrdata', innerHTML: '' }, tr);
-        td.libRecord = lrec;
-        td.innerHTML = "<div class='libraryrow'>" + this.makeLibraryName('srr_accession') + '</div>';
-        this.addLibraryInfo(lrec, infoLabels, tr);
-        var advPairInfo = [];
-        if (lrec.condition) {
-          advPairInfo.push('Condition:' + lrec.condition);
-        }
-        if (advPairInfo.length) {
-          lrec.design = true;
-          var condition_icon = this.getConditionIcon(lrec.condition);
-          var tdinfo = domConstruct.create('td', { 'class': 'iconcol', innerHTML: condition_icon }, tr);
-          new Tooltip({
-            connectId: [tdinfo],
-            label: advPairInfo.join('</br>')
-          });
-        }
-        else {
-          lrec.design = false;
-          var tdinfo = domConstruct.create('td', { innerHTML: '' }, tr);
-        }
-        var td2 = domConstruct.create('td', {
-          'class': 'iconcol',
-          innerHTML: "<i class='fa icon-x fa-1x' />"
-        }, tr);
-        if (this.addedLibs.counter < this.startingRows) {
-          this.libsTable.deleteRow(-1);
-        }
-        var handle = on(td2, 'click', lang.hitch(this, function (evt) {
-          this.destroyLib(lrec, lrec.id, 'id');
-        }));
-        lrec.handle = handle;
-        this.createLib(lrec);
-        this.increaseRows(this.libsTable, this.addedLibs, this.numlibs);
-
-        this.srr_accession_validation_message.innerHTML = '';
-        this.srr_accession.set('disabled', false);
+        this.addLibraryRow(lrec, infoLabels, 'srrdata');
+      } else {
+        throw new Error('Did not pass add library check. ');
       }
-      else {
-        throw new Error('No ids returned from esearch');
-      }
+      this.srr_accession_validation_message.innerHTML = '';
+      this.srr_accession.set('disabled', false);
       return true;
     },
 
