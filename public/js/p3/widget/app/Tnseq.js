@@ -390,16 +390,20 @@ define([
       return 'S(' + fn + ')';
 
     },
+    
     makeLibraryID: function (mode) {
       if (mode == 'paired') {
         var fn = this.read1.searchBox.get('value');
         var fn2 = this.read2.searchBox.get('value');
         return fn + fn2;
       }
-
       var fn = this.read.searchBox.get('value');
+      if (!(fn)) {
+        var fn1 = this.read1.searchBox.get('value');
+        var fn2 = this.read2.searchBox.get('value');
+        fn = fn1 + fn2;
+      }
       return fn;
-
     },
 
     onReset: function (evt) {
