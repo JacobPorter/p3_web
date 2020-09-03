@@ -390,7 +390,7 @@ define([
       return 'S(' + fn + ')';
 
     },
-    
+
     makeLibraryID: function (mode) {
       if (mode == 'paired') {
         var fn = this.read1.searchBox.get('value');
