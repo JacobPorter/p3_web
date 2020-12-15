@@ -2,14 +2,14 @@ define([
   'dojo/_base/declare', 'dijit/_WidgetBase', 'dojo/on',
   'dojo/dom-class',
   'dojo/text!./templates/MSA.html', './AppBase', 'dojo/dom-construct', 'dijit/registry',
-  'dojo/_base/Deferred', 'dojo/aspect', 'dojo/_base/lang', 'dojo/domReady!', 'dijit/form/NumberTextBox',
+  'dojo/_base/Deferred', 'dojo/aspect', 'dojo/_base/lang', 'dojo/domReady!', 'dijit/form/NumberTextBox', 'dijit/form/Textarea',
   'dojo/query', 'dojo/dom', 'dijit/popup', 'dijit/Tooltip', 'dijit/Dialog', 'dijit/TooltipDialog',
   'dojo/NodeList-traverse', '../../WorkspaceManager', 'dojo/store/Memory', 'dojox/widget/Standby', 'dojo/when'
 ], function (
   declare, WidgetBase, on,
   domClass,
   Template, AppBase, domConstruct, registry,
-  Deferred, aspect, lang, domReady, NumberTextBox,
+  Deferred, aspect, lang, domReady, NumberTextBox, Textarea,
   query, dom, popup, Tooltip, Dialog, TooltipDialog,
   children, WorkspaceManager, Memory, Standby, when
 ) {
@@ -19,14 +19,15 @@ define([
     applicationName: 'MSA',
     requireAuth: true,
     applicationLabel: 'Multiple Sequence Alignment',
-    applicationDescription: 'The multiple sequence alignment service with variation analysis can be used with genomes, feature groups, fasta files, and aligned fasta files.  User input is possible.',
+    applicationDescription: 'The multiple sequence alignment service with variation analysis can be used with feature groups, fasta files, and aligned fasta files.  User input is possible.',
     applicationHelp: 'user_guides/services/',
     tutorialLink: 'tutorial/proteome_comparison/',
     videoLink: '/videos/',
     pageTitle: 'Multiple Sequence Alignment',
     defaultPath: '',
     startingRows: 10,
-    maxGenomes: 20,
+    maxGenomes: 256,
+    textInput: false,
 
     constructor: function () {
       this._selfSet = true;
@@ -198,7 +199,15 @@ define([
     },
 
     onChangeSequence: function () {
-
+      if (this['fasta_keyboard_input'].value && !this.textInput) {
+        this.textInput = true;
+        this.addedGenomes = this.addedGenomes + 1;
+        this.numgenomes.set('value', Number(this.addedGenomes));
+      } else if (!this['fasta_keyboard_input'].value && this.textInput) {
+        this.textInput = false;
+        this.addedGenomes = this.addedGenomes - 1;
+        this.numgenomes.set('value', Number(this.addedGenomes));
+      }
     },
 
     makeGenomeName: function () {
@@ -464,7 +473,7 @@ define([
           numUserGenome += values.genome_ids.length;
         }
 
-        if (numUserGenome > 1 || num_fasta_files >= 1) {
+        if (numUserGenome > 1 || num_fasta_files >= 1 || values.fasta_keyboard_input) {
           domClass.add(this.domNode, 'Working');
           domClass.remove(this.domNode, 'Error');
           domClass.remove(this.domNode, 'Submitted');
@@ -515,10 +524,10 @@ define([
       if (values.ref_genome_id) {
         genomeIds.push(values.ref_genome_id);
       }
-      else if (values.ref_user_genomes_fasta) {
+      if (values.ref_user_genomes_fasta) {
         userGenomes.push(values.ref_user_genomes_fasta);
       }
-      else if (values.ref_user_genomes_featuregroup) {
+      if (values.ref_user_genomes_featuregroup) {
         featureGroups.push(values.ref_user_genomes_featuregroup);
       }
 
@@ -538,7 +547,7 @@ define([
         }
       });
 
-      seqcomp_values.genome_ids = genomeIds;
+
       if (userGenomes.length > 0) {
         seqcomp_values.fasta_files = userGenomes;
       }
@@ -547,6 +556,7 @@ define([
         seqcomp_values.user_feature_groups = featureGroups;
       }
 
+      //      seqcomp_values.genome_ids = genomeIds;
       seqcomp_values.aligner = values.aligner;
       seqcomp_values.output_path = values.output_path;
       seqcomp_values.output_file = values.output_file;
