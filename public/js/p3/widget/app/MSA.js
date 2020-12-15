@@ -25,7 +25,7 @@ define([
     videoLink: '/videos/',
     pageTitle: 'Multiple Sequence Alignment',
     defaultPath: '',
-    startingRows: 10,
+    startingRows: 5,
     maxGenomes: 256,
     textInput: false,
 
