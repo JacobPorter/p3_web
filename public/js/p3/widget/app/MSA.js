@@ -73,7 +73,7 @@ define([
 
     emptyTable: function (target, rowLimit) {
       for (var i = 0; i < rowLimit; i++) {
-        var tr = target.insertRow(0);// domConstr.create("tr",{},this.genomeTableBody);
+        var tr = target.insertRow(0);
         domConstruct.create('td', { innerHTML: "<div class='emptyrow'></div>" }, tr);
         domConstruct.create('td', { innerHTML: "<div class='emptyrow'></div>" }, tr);
         domConstruct.create('td', { innerHTML: "<div class='emptyrow'></div>" }, tr);
@@ -101,32 +101,40 @@ define([
         var incomplete = 0;
         var browser_select = 0;
         if (attachname == 'output_path' || attachname == 'ref_user_genomes_fasta' || attachname == 'ref_user_genomes_featuregroup') {
-          cur_value = this[attachname].searchBox.value;// ? "/_uuid/"+this[attachname].searchBox.value : "";
+          cur_value = this[attachname].searchBox.value;
           browser_select = 1;
         }
         else if (attachname == 'user_genomes_fasta') {
-          cur_value = this[attachname].searchBox.value;// ? "/_uuid/"+this[attachname].searchBox.value : "";
+          var existing_types = [];
+          cur_value = this[attachname].searchBox.value;
+          var type = null;
+          if (this[attachname].searchBox.onChange.target.item) {
+            type = this[attachname].searchBox.onChange.target.item.type;
+          }
+          cur_value = {"name": cur_value.trim(), "type": type};
           var compGenomeList = query('.genomedata');
           var genomeIds = [];
-
           compGenomeList.forEach(function (item) {
-            genomeIds.push(item.genomeRecord.user_genomes_fasta);
+            if ("user_genomes_fasta" in item.genomeRecord) {
+              genomeIds.push(item.genomeRecord.user_genomes_fasta.name);
+              existing_types.push(item.genomeRecord.user_genomes_fasta.type)
+            }
           });
-
-          if (genomeIds.length > 0 && genomeIds.indexOf(cur_value) > -1)  // no same genome ids are allowed
+          if (genomeIds.length > 0 && genomeIds.indexOf(cur_value.name) > -1) // no same genome ids are allowed
           {
+            success = 0;
+          }
+          if (existing_types.length > 0 && existing_types[0] != type) {
             success = 0;
           }
         }
         else if (attachname == 'user_genomes_featuregroup') {
-          cur_value = this[attachname].searchBox.value;// ? "/_uuid/"+this[attachname].searchBox.value : "";
+          cur_value = this[attachname].searchBox.value;
           var compGenomeList = query('.genomedata');
           var genomeIds = [];
-
           compGenomeList.forEach(function (item) {
-            genomeIds.push(item.genomeRecord.user_genomes_featuregroup);
+              genomeIds.push(item.genomeRecord.user_genomes_featuregroup);
           });
-
           if (genomeIds.length > 0 && genomeIds.indexOf(cur_value) > -1)  // no same genome ids are allowed
           {
             success = 0;
@@ -135,14 +143,10 @@ define([
         else if (attachname == 'comp_genome_id') {
           var compGenomeList = query('.genomedata');
           var genomeIds = [];
-
           compGenomeList.forEach(function (item) {
             genomeIds.push(item.genomeRecord.comp_genome_id);
           });
-
           cur_value = this[attachname].value;
-
-          // console.log("genomeIds = " + genomeIds + " cur_value = " + cur_value + " index = " +genomeIds.indexOf(cur_value));
           if (genomeIds.length > 0 && genomeIds.indexOf(cur_value) > -1)  // no same genome ids are allowed
           {
             success = 0;
@@ -156,9 +160,6 @@ define([
         else {
           cur_value = this[attachname].value;
         }
-
-        // console.log("cur_value=" + cur_value);
-
         if (typeof (cur_value) == 'string') {
           target[attachname] = cur_value.trim();
         }
@@ -195,7 +196,6 @@ define([
       } else {
         this.numref = 0;
       }
-      // console.log("change genome name, this.numref=", this.numref, "this.ref_genome_id.get('value')=", this.ref_genome_id.get('value'));
     },
 
     onChangeSequence: function () {
@@ -210,6 +210,18 @@ define([
       }
     },
 
+    onAlphabetChanged: function () {
+      var existing_types = this.getExistingTypes();
+      if (existing_types.length > 0) {
+        type = existing_types[0];
+        if (type.includes("protein")) {
+          this.protein.set("checked", true);
+        } else {
+          this.dna.set("checked", true);
+        }
+      }
+    },
+
     makeGenomeName: function () {
       var name = this.comp_genome_id.get('displayedValue');
       var maxName = 36;
@@ -217,32 +229,33 @@ define([
       if (name.length > maxName) {
         display_name = name.substr(0, (maxName / 2) - 2) + '...' + name.substr((name.length - (maxName / 2)) + 2);
       }
-
       return display_name;
     },
 
-    makeFastaName: function () {
+    makeFastaName: function (type) {
       var name = this.user_genomes_fasta.searchBox.get('displayedValue');
-      var maxName = 36;
+      var maxName = 32;
+      var my_type = "";
+      if (type.includes("protein")) {
+        my_type = "AA: ";
+      }
+      else if (type.includes("dna")) {
+        my_type = "NT: "; 
+      }
       var display_name = name;
-
       if (name.length > maxName) {
         display_name = name.substr(0, (maxName / 2) - 2) + '...' + name.substr((name.length - (maxName / 2)) + 2);
       }
-
-      return display_name;
+      return my_type.concat(display_name);
     },
 
     makeFeatureGroupName: function () {
       var name = this.user_genomes_featuregroup.searchBox.get('displayedValue');
       var maxName = 36;
       var display_name = name;
-      // console.log("this.user_genomes_featuregroup name = " + this.name);
-
       if (name.length > maxName) {
         display_name = name.substr(0, (maxName / 2) - 2) + '...' + name.substr((name.length - (maxName / 2)) + 2);
       }
-
       return display_name;
     },
 
@@ -253,7 +266,6 @@ define([
       if (name.length > maxName) {
         display_name = name.substr(0, (maxName / 2) - 2) + '...' + name.substr((name.length - (maxName / 2)) + 2);
       }
-
       return display_name;
     },
 
@@ -268,7 +280,6 @@ define([
         this.addedGenomes = this.addedGenomes + 1;
         this.numgenomes.set('value', Number(this.addedGenomes));
       }
-      // console.log("increase this.userGenomeList = " + this.userGenomeList);
     },
 
     decreaseGenome: function (genomeType, newGenomeIds) {
@@ -285,15 +296,11 @@ define([
         this.addedGenomes = this.addedGenomes - 1;
         this.numgenomes.set('value', Number(this.addedGenomes));
       }
-      // console.log("decrease this.userGenomeList = " + this.userGenomeList);
     },
 
     onAddGenome: function () {
-      // console.log("Create New Row", domConstruct);
       var lrec = {};
       var chkPassed = this.ingestAttachPoints(this.genomeToAttachPt, lrec);
-      // console.log("this.genomeToAttachPt = " + this.genomeToAttachPt);
-      // console.log("chkPassed = " + chkPassed + " lrec = " + lrec);
       if (chkPassed && this.addedGenomes < this.maxGenomes) {
         var newGenomeIds = [lrec[this.genomeToAttachPt]];
         var tr = this.genomeTable.insertRow(0);
@@ -306,7 +313,6 @@ define([
           this.genomeTable.deleteRow(-1);
         }
         var handle = on(td2, 'click', lang.hitch(this, function (evt) {
-          // console.log("Delete Row");
           domConstruct.destroy(tr);
           this.decreaseGenome('genome', newGenomeIds);
           if (this.addedGenomes < this.startingRows) {
@@ -319,28 +325,47 @@ define([
         }));
         this.increaseGenome('genome', newGenomeIds);
       }
-      // console.log(lrec);
+    },
+    
+    getExistingTypes: function () {
+      var existing_types = [];
+      var compGenomeList = query('.genomedata');
+      compGenomeList.forEach(function (item) {
+        if ("user_genomes_fasta" in item.genomeRecord) {
+          existing_types.push(item.genomeRecord.user_genomes_fasta.type)
+        }
+      });
+      return existing_types;
     },
 
     onAddFasta: function () {
-      // console.log("Create New Row", domConstruct);
       var lrec = {};
       var chkPassed = this.ingestAttachPoints(this.fastaToAttachPt, lrec);
-      // console.log("this.fastaToAttachPt = " + this.fastaToAttachPt);
-      // console.log("chkPassed = " + chkPassed + " lrec = " + lrec);
       if (chkPassed && this.addedGenomes < this.maxGenomes) {
+        var type = lrec.user_genomes_fasta.type
         var newGenomeIds = [lrec[this.fastaToAttachPt]];
+        var existing_types = this.getExistingTypes();
+        console.log(existing_types);
+        if (existing_types.length == 0) {
+          if (type.includes("protein")) {
+            // this.dna.set("checked", false);
+            this.protein.set("checked", true);
+          } else {
+            this.dna.set("checked", true);
+            // this.protein.set("checked", false);
+          }
+        }
         var tr = this.genomeTable.insertRow(0);
         var td = domConstruct.create('td', { 'class': 'textcol genomedata', innerHTML: '' }, tr);
         td.genomeRecord = lrec;
-        td.innerHTML = "<div class='libraryrow'>" + this.makeFastaName() + '</div>';
+        td.innerHTML = "<div class='libraryrow'>" + this.makeFastaName(type) + '</div>';
         domConstruct.create('td', { innerHTML: '' }, tr);
         var td2 = domConstruct.create('td', { innerHTML: "<i class='fa icon-x fa-1x' />" }, tr);
+        
         if (this.addedGenomes < this.startingRows) {
           this.genomeTable.deleteRow(-1);
         }
         var handle = on(td2, 'click', lang.hitch(this, function (evt) {
-          // console.log("Delete Row");
           domConstruct.destroy(tr);
           this.decreaseGenome('fasta', newGenomeIds);
           if (this.addedGenomes < this.startingRows) {
@@ -352,16 +377,14 @@ define([
           handle.remove();
         }));
         this.increaseGenome('fasta', newGenomeIds);
+      } else {
+        
       }
-      // console.log(lrec);
     },
 
     onAddFeatureGroup: function () {
-      console.log('Create New Row', domConstruct);
       var lrec = {};
       var chkPassed = this.ingestAttachPoints(this.featureGroupToAttachPt, lrec);
-      // console.log("this.featureGroupToAttachPt = " + this.featureGroupToAttachPt);
-      // console.log("chkPassed = " + chkPassed + " lrec = " + lrec);
       if (chkPassed && this.addedGenomes < this.maxGenomes) {
         var newGenomeIds = [lrec[this.featureGroupToAttachPt]];
         var tr = this.genomeTable.insertRow(0);
@@ -374,7 +397,6 @@ define([
           this.genomeTable.deleteRow(-1);
         }
         var handle = on(td2, 'click', lang.hitch(this, function (evt) {
-          // console.log("Delete Row");
           domConstruct.destroy(tr);
           this.decreaseGenome('feature_group', newGenomeIds);
           if (this.addedGenomes < this.startingRows) {
@@ -387,15 +409,12 @@ define([
         }));
         this.increaseGenome('feature_group', newGenomeIds);
       }
-      // console.log(lrec);
     },
 
     // implement adding a genome group
     onAddGenomeGroup: function () {
       var lrec = {};
       var chkPassed = this.ingestAttachPoints(this.genomeGroupToAttachPt, lrec);
-      // console.log("this.genomeGroupToAttachPt = " + this.genomeGroupToAttachPt);
-      // console.log("chkPassed = " + chkPassed + " lrec = " + lrec);
       var path = lrec[this.genomeGroupToAttachPt];
       var newGenomeIds = [];
       when(WorkspaceManager.getObject(path), lang.hitch(this, function (res) {
@@ -414,8 +433,6 @@ define([
           msg += ' and you are trying to select ' + count + '.';
           new Dialog({ title: 'Notice', content: msg }).show();
         }
-        // console.log("newGenomeIds = ", newGenomeIds);
-
         if (chkPassed && this.addedGenomes < this.maxGenomes
           && newGenomeIds.length > 0
           && count <= this.maxGenomes)
@@ -430,7 +447,6 @@ define([
             this.genomeTable.deleteRow(-1);
           }
           var handle = on(td2, 'click', lang.hitch(this, function (evt) {
-            // console.log("Delete Row");
             domConstruct.destroy(tr);
             this.decreaseGenome('genome_group', newGenomeIds);
             if (this.addedGenomes < this.startingRows) {
@@ -444,40 +460,22 @@ define([
           this.increaseGenome('genome_group', newGenomeIds);
         }
       }));
-
-      // console.log(lrec);
     },
 
     onSubmit: function (evt) {
       var _self = this;
-
       evt.preventDefault();
       evt.stopPropagation();
       if (this.validate()) {
         var values = this.getValues();
-        // console.log("user_genomes ", values["user_genomes"]);
-        // console.log("user_feature_groups ", values["user_feature_groups"]);
-        // console.log("genome_ids ", values["genome_ids"]);
-        // console.log("reference_genome_index ", values["reference_genome_index"]);
-        var numUserGenome = 0;
-        var num_fasta_files = 0;
-
-        if (values.fasta_files) {
-          numUserGenome += values.fasta_files.length;
-          var num_fasta_files = values.fasta_files.length;
+        var feature_groups_count = 0;
+        if (values.feature_groups) {
+          feature_groups_count = values.feature_groups.length
         }
-        if (values.user_feature_groups) {
-          numUserGenome += values.user_feature_groups.length;
-        }
-        if (values.genome_ids) {
-          numUserGenome += values.genome_ids.length;
-        }
-
-        if (numUserGenome > 1 || num_fasta_files >= 1 || values.fasta_keyboard_input) {
+        if (feature_groups_count >= 1 || values.fasta_files.length >= 1 || values.fasta_keyboard_input) {
           domClass.add(this.domNode, 'Working');
           domClass.remove(this.domNode, 'Error');
           domClass.remove(this.domNode, 'Submitted');
-
           if (window.App.noJobSubmission) {
             var dlg = new Dialog({
               title: 'Job Submission Params: ',
@@ -489,7 +487,6 @@ define([
           }
           this.submitButton.set('disabled', true);
           window.App.api.service('AppService.start_app', [this.applicationName, values]).then(function (results) {
-            // console.log("Job Submission Results: ", results);
             domClass.remove(_self.domNode, 'Working');
             domClass.add(_self.domNode, 'Submitted');
             _self.submitButton.set('disabled', false);
@@ -497,72 +494,53 @@ define([
               obj.reset();
             });
           }, function (err) {
-            // console.log("Error:", err)
             domClass.remove(_self.domNode, 'Working');
             domClass.add(_self.domNode, 'Error');
             _self.errorMessage.innerHTML = err;
           });
         } else {
           domClass.add(this.domNode, 'Error');
-          // console.log("Form is incomplete");
         }
-
       } else {
         domClass.add(this.domNode, 'Error');
-        // console.log("Form is incomplete");
       }
     },
 
     getValues: function () {
       var seqcomp_values = {};
+      console.log(this)
       var values = this.inherited(arguments);
       var compGenomeList = query('.genomedata');
-      var genomeIds = [];
       var userGenomes = [];
       var featureGroups = [];
-
-      if (values.ref_genome_id) {
-        genomeIds.push(values.ref_genome_id);
-      }
       if (values.ref_user_genomes_fasta) {
         userGenomes.push(values.ref_user_genomes_fasta);
       }
       if (values.ref_user_genomes_featuregroup) {
         featureGroups.push(values.ref_user_genomes_featuregroup);
       }
-
-      this.userGenomeList.forEach(lang.hitch(this, function (id) {
-        genomeIds.push(id);
-      }));
-
       compGenomeList.forEach(function (item) {
         if (item.genomeRecord.user_genomes_fasta) {
           userGenomes.push(item.genomeRecord.user_genomes_fasta);
         }
       });
-
       compGenomeList.forEach(function (item) {
         if (item.genomeRecord.user_genomes_featuregroup) {
           featureGroups.push(item.genomeRecord.user_genomes_featuregroup);
         }
       });
-
-
       if (userGenomes.length > 0) {
         seqcomp_values.fasta_files = userGenomes;
       }
-
       if (featureGroups.length > 0) {
-        seqcomp_values.user_feature_groups = featureGroups;
+        seqcomp_values.feature_groups = featureGroups;
       }
-
-      //      seqcomp_values.genome_ids = genomeIds;
       seqcomp_values.aligner = values.aligner;
       seqcomp_values.output_path = values.output_path;
       seqcomp_values.output_file = values.output_file;
       seqcomp_values.fasta_keyboard_input = values.fasta_keyboard_input;
       seqcomp_values.variation = values.variation;
-
+      seqcomp_values.alphabet = values.alphabet;
       return seqcomp_values;
     }
 

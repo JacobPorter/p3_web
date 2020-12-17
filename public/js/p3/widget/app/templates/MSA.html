@@ -17,7 +17,7 @@
     </div>
     <div class="formFieldsContainer">
       <div style="display: none;">
-        <input data-dojo-type="dijit/form/NumberTextBox" value="0" required="false" data-dojo-attach-point="numgenomes" data-dojo-props="constraints:{min:1,max:20}," />
+        <input data-dojo-type="dijit/form/NumberTextBox" value="0" required="false" data-dojo-attach-point="numgenomes" data-dojo-props="constraints:{min:1,max:256}," />
       </div>
       <table class="assemblyblocks">
         <tr>
@@ -46,6 +46,12 @@
 		                </select>
 		              </div>
 		              </div>
+		            <div class="appRow">
+                      <input type="radio" data-dojo-type="dijit/form/RadioButton" data-dojo-attach-point="dna" name="alphabet" value="dna" checked data-dojo-attach-event="onChange:onAlphabetChanged"/>
+                      <label for="radio1" style="font-size:8pt">DNA</label>
+                      <input type="radio" data-dojo-type="dijit/form/RadioButton" data-dojo-attach-point="protein" name="alphabet" value="protein" />
+                      <label for="radio2" style="font-size:8pt">Protein</label>
+                    </div>
                     <div class="appRow">
                       <label class="paramlabel">Output Folder</label><br>
                       <div data-dojo-type="p3/widget/WorkspaceObjectSelector" name="output_path" data-dojo-attach-point="output_path" required="true" data-dojo-props="title:'Select an Output Folder',autoSelectCurrent:true,selectionText:'Destination',type:['folder'],multi:false" data-dojo-attach-event="onChange:onOutputPathChange"></div>
@@ -69,8 +75,8 @@
                 <div class="appsublabel">Add sequences (use plus buttons to add).</div>
               </div>
               <div class="appRow">
-                <label>Select fasta file</label><br>
-                <div style="width:85%;display:inline-block;" data-dojo-type="p3/widget/WorkspaceObjectSelector" name="user_genomes_fasta" required="false" data-dojo-attach-point="user_genomes_fasta" data-dojo-props="type:['contigs'],multi:false,promptMessage:'Select or Upload fasta file to your workspace for alignment.',missingMessage:'User file is optional.', placeHolder:'Optional'"></div>
+                <label>Select DNA or protein fasta file</label><br>
+                <div style="width:85%;display:inline-block;" data-dojo-type="p3/widget/WorkspaceObjectSelector" name="user_genomes_fasta" required="false" data-dojo-attach-point="user_genomes_fasta" data-dojo-props="type:['feature_protein_fasta', 'feature_dna_fasta'],multi:false,promptMessage:'Select or Upload fasta file to your workspace for alignment.',missingMessage:'User file is optional.', placeHolder:'Optional'"></div>
                 <div style="width:10%;display:inline-block;"><i data-dojo-attach-event="click:onAddFasta" class="fa icon-plus-circle fa-lg"></i>
                 </div>
                 <br>
@@ -102,7 +108,7 @@
                       </div>
                     </div>
             <textarea name="fasta_keyboard_input"
-                      style="width:96%; height:400px; margin-left:5px; font-family: monospace; font-size:12px; max-height:500px"
+                      style="width:96%; height:350px; margin-left:5px; font-family: monospace; font-size:12px; max-height:500px"
                       data-dojo-attach-point="fasta_keyboard_input"
                       data-dojo-type="dijit/form/Textarea"
                       data-dojo-props="rows:20, placeholder:'Enter fasta records of sequences to align.', intermediateChanges:false"
