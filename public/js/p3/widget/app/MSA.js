@@ -111,16 +111,16 @@ define([
           if (this[attachname].searchBox.onChange.target.item) {
             type = this[attachname].searchBox.onChange.target.item.type;
           }
-          cur_value = {"name": cur_value.trim(), "type": type};
+          cur_value = { 'file': cur_value.trim(), 'type': type };
           var compGenomeList = query('.genomedata');
           var genomeIds = [];
           compGenomeList.forEach(function (item) {
-            if ("user_genomes_fasta" in item.genomeRecord) {
-              genomeIds.push(item.genomeRecord.user_genomes_fasta.name);
-              existing_types.push(item.genomeRecord.user_genomes_fasta.type)
+            if ('user_genomes_fasta' in item.genomeRecord) {
+              genomeIds.push(item.genomeRecord.user_genomes_fasta.file);
+              existing_types.push(item.genomeRecord.user_genomes_fasta.type);
             }
           });
-          if (genomeIds.length > 0 && genomeIds.indexOf(cur_value.name) > -1) // no same genome ids are allowed
+          if (genomeIds.length > 0 && genomeIds.indexOf(cur_value.file) > -1) // no same genome ids are allowed
           {
             success = 0;
           }
@@ -130,10 +130,12 @@ define([
         }
         else if (attachname == 'user_genomes_featuregroup') {
           cur_value = this[attachname].searchBox.value;
+          console.log(cur_value);
+          console.log(this[attachname]);
           var compGenomeList = query('.genomedata');
           var genomeIds = [];
           compGenomeList.forEach(function (item) {
-              genomeIds.push(item.genomeRecord.user_genomes_featuregroup);
+            genomeIds.push(item.genomeRecord.user_genomes_featuregroup);
           });
           if (genomeIds.length > 0 && genomeIds.indexOf(cur_value) > -1)  // no same genome ids are allowed
           {
@@ -213,11 +215,11 @@ define([
     onAlphabetChanged: function () {
       var existing_types = this.getExistingTypes();
       if (existing_types.length > 0) {
-        type = existing_types[0];
-        if (type.includes("protein")) {
-          this.protein.set("checked", true);
+        var type = existing_types[0];
+        if (type.includes('protein')) {
+          this.protein.set('checked', true);
         } else {
-          this.dna.set("checked", true);
+          this.dna.set('checked', true);
         }
       }
     },
@@ -235,12 +237,12 @@ define([
     makeFastaName: function (type) {
       var name = this.user_genomes_fasta.searchBox.get('displayedValue');
       var maxName = 32;
-      var my_type = "";
-      if (type.includes("protein")) {
-        my_type = "AA: ";
+      var my_type = '';
+      if (type.includes('protein')) {
+        my_type = 'AA: ';
       }
-      else if (type.includes("dna")) {
-        my_type = "NT: "; 
+      else if (type.includes('dna')) {
+        my_type = 'NT: ';
       }
       var display_name = name;
       if (name.length > maxName) {
@@ -326,13 +328,13 @@ define([
         this.increaseGenome('genome', newGenomeIds);
       }
     },
-    
+
     getExistingTypes: function () {
       var existing_types = [];
       var compGenomeList = query('.genomedata');
       compGenomeList.forEach(function (item) {
-        if ("user_genomes_fasta" in item.genomeRecord) {
-          existing_types.push(item.genomeRecord.user_genomes_fasta.type)
+        if ('user_genomes_fasta' in item.genomeRecord) {
+          existing_types.push(item.genomeRecord.user_genomes_fasta.type);
         }
       });
       return existing_types;
@@ -342,16 +344,16 @@ define([
       var lrec = {};
       var chkPassed = this.ingestAttachPoints(this.fastaToAttachPt, lrec);
       if (chkPassed && this.addedGenomes < this.maxGenomes) {
-        var type = lrec.user_genomes_fasta.type
+        var type = lrec.user_genomes_fasta.type;
         var newGenomeIds = [lrec[this.fastaToAttachPt]];
         var existing_types = this.getExistingTypes();
         console.log(existing_types);
         if (existing_types.length == 0) {
-          if (type.includes("protein")) {
+          if (type.includes('protein')) {
             // this.dna.set("checked", false);
-            this.protein.set("checked", true);
+            this.protein.set('checked', true);
           } else {
-            this.dna.set("checked", true);
+            this.dna.set('checked', true);
             // this.protein.set("checked", false);
           }
         }
@@ -361,7 +363,7 @@ define([
         td.innerHTML = "<div class='libraryrow'>" + this.makeFastaName(type) + '</div>';
         domConstruct.create('td', { innerHTML: '' }, tr);
         var td2 = domConstruct.create('td', { innerHTML: "<i class='fa icon-x fa-1x' />" }, tr);
-        
+
         if (this.addedGenomes < this.startingRows) {
           this.genomeTable.deleteRow(-1);
         }
@@ -377,8 +379,6 @@ define([
           handle.remove();
         }));
         this.increaseGenome('fasta', newGenomeIds);
-      } else {
-        
       }
     },
 
@@ -470,7 +470,7 @@ define([
         var values = this.getValues();
         var feature_groups_count = 0;
         if (values.feature_groups) {
-          feature_groups_count = values.feature_groups.length
+          feature_groups_count = values.feature_groups.length;
         }
         if (feature_groups_count >= 1 || values.fasta_files.length >= 1 || values.fasta_keyboard_input) {
           domClass.add(this.domNode, 'Working');
@@ -508,7 +508,7 @@ define([
 
     getValues: function () {
       var seqcomp_values = {};
-      console.log(this)
+      console.log(this);
       var values = this.inherited(arguments);
       var compGenomeList = query('.genomedata');
       var userGenomes = [];
@@ -539,7 +539,7 @@ define([
       seqcomp_values.output_path = values.output_path;
       seqcomp_values.output_file = values.output_file;
       seqcomp_values.fasta_keyboard_input = values.fasta_keyboard_input;
-      seqcomp_values.variation = values.variation;
+      // seqcomp_values.variation = values.variation;
       seqcomp_values.alphabet = values.alphabet;
       return seqcomp_values;
     }
