@@ -155,8 +155,6 @@ define([
         }
         else if (attachname == 'user_genomes_featuregroup') {
           cur_value = this[attachname].searchBox.value;
-          console.log(cur_value);
-          console.log(this[attachname]);
           var compGenomeList = query('.genomedata');
           var genomeIds = [];
           compGenomeList.forEach(function (item) {
@@ -378,7 +376,6 @@ define([
         var type = lrec.user_genomes_fasta.type;
         var newGenomeIds = [lrec[this.fastaToAttachPt]];
         var existing_types = this.getExistingTypes();
-        console.log(existing_types);
         if (existing_types.length == 0) {
           if (type.includes('protein')) {
             // this.dna.set("checked", false);
@@ -449,7 +446,6 @@ define([
         var type = lrec.user_genomes_alignment.type;
         var newGenomeIds = [lrec[this.alignmentToAttachPt]];
         var existing_types = this.getExistingTypes();
-        console.log(existing_types);
         if (existing_types.length == 0) {
           if (type.includes('protein')) {
             // this.dna.set("checked", false);
@@ -541,10 +537,14 @@ define([
       if (this.validate()) {
         var values = this.getValues();
         var feature_groups_count = 0;
+        var fasta_files_count = 0;
         if (values.feature_groups) {
           feature_groups_count = values.feature_groups.length;
         }
-        if (feature_groups_count >= 1 || values.fasta_files.length >= 1 || values.fasta_keyboard_input) {
+        if (values.fasta_files) {
+          fasta_files_count = values.fasta_files.length;
+        }
+        if (feature_groups_count >= 1 || fasta_files_count >= 1 || values.fasta_keyboard_input) {
           domClass.add(this.domNode, 'Working');
           domClass.remove(this.domNode, 'Error');
           domClass.remove(this.domNode, 'Submitted');
@@ -580,7 +580,6 @@ define([
 
     getValues: function () {
       var seqcomp_values = {};
-      console.log(this);
       var values = this.inherited(arguments);
       var compGenomeList = query('.genomedata');
       var userGenomes = [];
@@ -600,11 +599,6 @@ define([
           userGenomes.push(item.genomeRecord.user_genomes_alignment);
         }
       });
-      // compGenomeList.forEach(function (item) {
-      //   if (item.genomeRecord.user_genomes_featuregroup) {
-      //     featureGroups.push(item.genomeRecord.user_genomes_featuregroup);
-      //   }
-      // });
       if (userGenomes.length > 0) {
         seqcomp_values.fasta_files = userGenomes;
       }
@@ -615,7 +609,6 @@ define([
       seqcomp_values.output_path = values.output_path;
       seqcomp_values.output_file = values.output_file;
       seqcomp_values.fasta_keyboard_input = values.fasta_keyboard_input;
-      // seqcomp_values.variation = values.variation;
       seqcomp_values.alphabet = values.alphabet;
       return seqcomp_values;
     }
