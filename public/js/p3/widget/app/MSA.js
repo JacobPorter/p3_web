@@ -235,6 +235,30 @@ define([
       }
     },
 
+    validateFasta: function () {
+      var records = this.fasta_keyboard_input.value.trim().toUpperCase();
+      var arr = records.split('\n');
+      if (arr.length == 0 || arr[0] == '') {
+        this.input_validation_message.innerHTML = '';
+        return true;
+      }
+      if (arr[0][0] != '>' || arr.length <= 1) {
+        this.input_validation_message.innerHTML = ' A fasta record is at least two lines and starts with ">".';
+        return false;
+      }
+      for (var i = 0; i < arr.length; i++) {
+        if (arr[i][0] == '>') {
+          continue;
+        }
+        if (!(/^[ACDEFGHIKLMNPQRSTUVWY\s]+$/i.test(arr[i]))) {
+          this.input_validation_message.innerHTML = ' The fasta records must have amino acid or nucleotide letters.';
+          return false;
+        }
+      }
+      this.input_validation_message.innerHTML = '';
+      return true;
+    },
+
     onAlphabetChanged: function () {
       var existing_types = this.getExistingTypes();
       if (existing_types.length > 0) {
@@ -544,7 +568,7 @@ define([
         if (values.fasta_files) {
           fasta_files_count = values.fasta_files.length;
         }
-        if (feature_groups_count >= 1 || fasta_files_count >= 1 || values.fasta_keyboard_input) {
+        if (this.validateFasta() && (feature_groups_count >= 1 || fasta_files_count >= 1 || values.fasta_keyboard_input)) {
           domClass.add(this.domNode, 'Working');
           domClass.remove(this.domNode, 'Error');
           domClass.remove(this.domNode, 'Submitted');
