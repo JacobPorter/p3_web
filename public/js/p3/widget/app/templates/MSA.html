@@ -57,7 +57,8 @@
                     </div>
                     <div class="appRow">
                       <input type="radio" data-dojo-type="dijit/form/RadioButton" data-dojo-attach-point="dna"
-                        name="alphabet" value="dna" checked data-dojo-attach-event="onChange:onAlphabetChanged" />
+                        name="alphabet" value="dna" checked />
+                      <!-- data-dojo-attach-event="onChange:onAlphabetChanged"-->
                       <label for="radio1" style="font-size:8pt">DNA</label>
                       <input type="radio" data-dojo-type="dijit/form/RadioButton" data-dojo-attach-point="protein"
                         name="alphabet" value="protein" />
@@ -142,7 +143,7 @@
             <br>
           </div>
           <div class="appRow">
-            <label> selected objects table</label>
+            <label> Selected objects table</label>
           </div>
           <div class="appRow" style="width:90%; margin-top:10px; text-align: center;">
             <table class="librarytable" frame="box" data-dojo-attach-point="genomeTable"
