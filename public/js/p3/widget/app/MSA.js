@@ -125,9 +125,6 @@ define([
           {
             success = 0;
           }
-          if (existing_types.length > 0 && existing_types[0] != type) {
-            success = 0;
-          }
         }
         else if (attachname == 'user_genomes_alignment') {
           var existing_types = [];
@@ -147,9 +144,6 @@ define([
           });
           if (genomeIds.length > 0 && genomeIds.indexOf(cur_value.file) > -1) // no same genome ids are allowed
           {
-            success = 0;
-          }
-          if (existing_types.length > 0 && existing_types[0] != type) {
             success = 0;
           }
         }
@@ -259,17 +253,16 @@ define([
       return true;
     },
 
-    // onAlphabetChanged: function () {
-    //   var existing_types = this.getExistingTypes();
-    //   if (existing_types.length > 0) {
-    //     var type = existing_types[0];
-    //     if (type.includes('protein')) {
-    //       this.protein.set('checked', true);
-    //     } else {
-    //       this.dna.set('checked', true);
-    //     }
-    //   }
-    // },
+    onAlphabetChanged: function () {
+      var existing_types = this.getExistingTypes();
+      // if (existing_types.length > 0) {
+      for (var i = 0; i < existing_types.length; i++) {
+        if (existing_types[i].includes('protein')) {
+          this.protein.set('checked', true);
+        }
+      }
+      // }
+    },
 
     makeGenomeName: function () {
       var name = this.comp_genome_id.get('displayedValue');
@@ -380,18 +373,18 @@ define([
       }
     },
 
-    // getExistingTypes: function () {
-    //   var existing_types = [];
-    //   var compGenomeList = query('.genomedata');
-    //   compGenomeList.forEach(function (item) {
-    //     if ('user_genomes_fasta' in item.genomeRecord) {
-    //       existing_types.push(item.genomeRecord.user_genomes_fasta.type);
-    //     } else if ('user_genomes_alignment' in item.genomeRecord) {
-    //       existing_types.push(item.genomeRecord.user_genomes_alignment.type);
-    //     }
-    //   });
-    //   return existing_types;
-    // },
+    getExistingTypes: function () {
+      var existing_types = [];
+      var compGenomeList = query('.genomedata');
+      compGenomeList.forEach(function (item) {
+        if ('user_genomes_fasta' in item.genomeRecord) {
+          existing_types.push(item.genomeRecord.user_genomes_fasta.type);
+        } else if ('user_genomes_alignment' in item.genomeRecord) {
+          existing_types.push(item.genomeRecord.user_genomes_alignment.type);
+        }
+      });
+      return existing_types;
+    },
 
     onAddFasta: function () {
       var lrec = {};
@@ -399,16 +392,6 @@ define([
       if (chkPassed && this.addedGenomes < this.maxGenomes) {
         var type = lrec.user_genomes_fasta.type;
         var newGenomeIds = [lrec[this.fastaToAttachPt]];
-        // var existing_types = this.getExistingTypes();
-        // if (existing_types.length == 0) {
-        //   if (type.includes('protein')) {
-        //     // this.dna.set("checked", false);
-        //     this.protein.set('checked', true);
-        //   } else {
-        //     this.dna.set('checked', true);
-        //     // this.protein.set("checked", false);
-        //   }
-        // }
         var tr = this.genomeTable.insertRow(0);
         var td = domConstruct.create('td', { 'class': 'textcol genomedata', innerHTML: '' }, tr);
         td.genomeRecord = lrec;
@@ -431,6 +414,7 @@ define([
           handle.remove();
         }));
         this.increaseGenome('fasta', newGenomeIds);
+        this.onAlphabetChanged();
       }
     },
 
@@ -469,16 +453,6 @@ define([
       if (chkPassed && this.addedGenomes < this.maxGenomes) {
         var type = lrec.user_genomes_alignment.type;
         var newGenomeIds = [lrec[this.alignmentToAttachPt]];
-        // var existing_types = this.getExistingTypes();
-        // if (existing_types.length == 0) {
-        //   if (type.includes('protein')) {
-        //     // this.dna.set("checked", false);
-        //     this.protein.set('checked', true);
-        //   } else {
-        //     this.dna.set('checked', true);
-        //     // this.protein.set("checked", false);
-        //   }
-        // }
         var tr = this.genomeTable.insertRow(0);
         var td = domConstruct.create('td', { 'class': 'textcol genomedata', innerHTML: '' }, tr);
         td.genomeRecord = lrec;
@@ -501,6 +475,7 @@ define([
           handle.remove();
         }));
         this.increaseGenome('fasta', newGenomeIds);
+        this.onAlphabetChanged();
       }
     },
 
