@@ -6,7 +6,7 @@ define([
   './Confirmation', './SelectionToGroup', 'dijit/Dialog', 'dijit/TooltipDialog',
   'dijit/popup', 'dijit/form/Select', './ContainerActionBar', './GroupExplore', './PerspectiveToolTip',
   'dijit/form/TextBox', './WorkspaceObjectSelector', './PermissionEditor',
-  'dojo/promise/all', '../util/encodePath',
+  'dojo/promise/all', '../util/encodePath', 'dojo/when', 'dojo/request', './TsvCsvFeatures', './viewer/JobResult',
 
   'dojo/NodeList-traverse'
 ], function (
@@ -17,7 +17,7 @@ define([
   Confirmation, SelectionToGroup, Dialog, TooltipDialog,
   popup, Select, ContainerActionBar, GroupExplore, PerspectiveToolTipDialog,
   TextBox, WSObjectSelector, PermissionEditor,
-  All, encodePath
+  All, encodePath, when, request, tsvCsvFeatures, JobResult
 ) {
 
   var mmc = '<div class="wsActionTooltip" rel="dna">Nucleotide</div><div class="wsActionTooltip" rel="protein">Amino Acid</div>';
@@ -48,6 +48,8 @@ define([
     splitter: false,
     docsServiceURL: window.App.docsServiceURL,
     tutorialLink: 'user_guides/workspaces/workspace.html',
+    tsvCsvFilename: '',
+
     startup: function () {
       var self = this;
 
@@ -93,10 +95,8 @@ define([
         domClass.toggle(icon, 'icon-chevron-circle-right');
         domClass.toggle(icon, 'icon-chevron-circle-left');
 
-        if (domClass.contains(icon, 'icon-chevron-circle-left'))
-        { domAttr.set(text, 'textContent', 'SHOW'); }
-        else
-        { domAttr.set(text, 'textContent', 'HIDE'); }
+        if (domClass.contains(icon, 'icon-chevron-circle-left')) { domAttr.set(text, 'textContent', 'SHOW'); }
+        else { domAttr.set(text, 'textContent', 'HIDE'); }
       });
 
       this.actionPanel.addAction('UserGuide', 'fa icon-info-circle fa-2x', {
@@ -290,16 +290,16 @@ define([
       this.actionPanel.addAction('DownloadItem', 'fa icon-download fa-2x', {
         label: 'DWNLD',
         multiple: false,
-        validTypes: WorkspaceManager.downloadTypes,
+        forbiddenTypes: WorkspaceManager.forbiddenDownloadTypes,
         tooltip: 'Download'
       }, function (selection) {
         WorkspaceManager.downloadFile(selection[0].path);
       }, false);
 
       var dfc = '<div>Download Table As...</div>' +
-          '<div class="wsActionTooltip" rel="text/tsv">Text</div>' +
-          '<div class="wsActionTooltip" rel="text/csv">CSV</div>' +
-          '<div class="wsActionTooltip" rel="application/vnd.openxmlformats">Excel</div>';
+        '<div class="wsActionTooltip" rel="text/tsv">Text</div>' +
+        '<div class="wsActionTooltip" rel="text/csv">CSV</div>' +
+        '<div class="wsActionTooltip" rel="application/vnd.openxmlformats">Excel</div>';
       var downloadTT = new TooltipDialog({
         content: dfc,
         onMouseLeave: function () {
@@ -375,9 +375,9 @@ define([
       }, false);
 
       var dtsfc = '<div>Download Job Results:</div>' +
-          '<div class="wsActionTooltip" rel="circos.svg">SVG Image</div>' +
-          '<div class="wsActionTooltip" rel="genome_comparison.txt">Genome Comparison Table (txt)</div>' +
-          '<div class="wsActionTooltip" rel="genome_comparison.xls">Genome Comparison Table (xls)</div>';
+        '<div class="wsActionTooltip" rel="circos.svg">SVG Image</div>' +
+        '<div class="wsActionTooltip" rel="genome_comparison.txt">Genome Comparison Table (txt)</div>' +
+        '<div class="wsActionTooltip" rel="genome_comparison.xls">Genome Comparison Table (xls)</div>';
       var downloadTTSelectFile = new TooltipDialog({
         content: dtsfc,
         onMouseLeave: function () {
@@ -499,7 +499,7 @@ define([
         var isLegacy = parts[1] == 'models';
         path = parts.slice(0, -1).join('/') + '/' + (isLegacy ? '' : '.') + parts.slice(-1)[0];
 
-        var url = 'http://modelseed.theseed.org/#/model' + path + '?login=patric';
+        var url = 'https://modelseed.org/model' + path + '?login=patric';
         window.open(url, '_blank');
       }, false);
 
@@ -564,10 +564,8 @@ define([
         domClass.toggle(icon, 'icon-eye-slash');
         domClass.toggle(icon, 'icon-eye');
 
-        if (window.App.showHiddenFiles)
-        { domAttr.set(text, 'textContent', 'HIDE HIDDEN'); }
-        else
-        { domAttr.set(text, 'textContent', 'SHOW HIDDEN'); }
+        if (window.App.showHiddenFiles) { domAttr.set(text, 'textContent', 'HIDE HIDDEN'); }
+        else { domAttr.set(text, 'textContent', 'SHOW HIDDEN'); }
 
         Topic.publish('/refreshWorkspace');
       }, false);
@@ -1081,8 +1079,7 @@ define([
 
           if (p[0] == 'global_permission') return;
 
-          if (newUsers.indexOf(user) == -1)
-          { newPerms.push({ user: user, permission: 'n' }); }
+          if (newUsers.indexOf(user) == -1) { newPerms.push({ user: user, permission: 'n' }); }
         });
 
         Topic.publish('/Notification', {
@@ -1155,7 +1152,7 @@ define([
             var prom;
             var newName = nameInput.get('value');
             if (path.split('/').length <= 3) {
-              prom =  WorkspaceManager.renameWorkspace(path, newName);
+              prom = WorkspaceManager.renameWorkspace(path, newName);
             } else {
               prom = WorkspaceManager.rename(path, nameInput.get('value'), isJob);
             }
@@ -1194,7 +1191,7 @@ define([
       /**
        * Handle unaccepted requests
        */
-      var types = this.itemDetailPanel.changeableTypes;
+      var types = WorkspaceManager.changeableTypes;
       var options = Object.keys(types).map(function (key) { return types[key]; });
       var validTypes = options.map(function (item) { return item.value; });
 
@@ -1241,20 +1238,20 @@ define([
       // open form in dialog
       var paths = selection.map(function (obj) { return obj.path; });
       var dlg = new Confirmation({
-        title: 'Change '  + (paths.length > 1 ? paths.length + ' Object Types' : ' Object Type' ),
+        title: 'Change ' + (paths.length > 1 ? paths.length + ' Object Types' : ' Object Type'),
         okLabel: 'Save',
         content: form,
         style: { width: '300px' },
         onConfirm: function (evt) {
           var newType = typeSelector.attr('value');
           var newObjs = selection.map(function (obj) {
-            return Object.assign(obj, { type: newType } );
+            return Object.assign(obj, { type: newType });
           });
 
           Topic.publish('/Notification', {
             message: "<span class='default'>Changing " +
-              (paths.length > 1 ?  paths.length + ' types...' : ' type...') +
-            '</span>'
+              (paths.length > 1 ? paths.length + ' types...' : ' type...') +
+              '</span>'
           });
 
           WorkspaceManager.updateMetadata(newObjs)
@@ -1371,10 +1368,6 @@ define([
                     d = 'p3/widget/viewer/GenomeComparison';
                   }
                   break;
-                case 'GenomeAssembly2':
-                case 'GenomeAssembly':
-                  d = 'p3/widget/viewer/GenomeAssembly';
-                  break;
                 case 'GenomeAnnotation':
                 case 'GenomeAnnotationGenbank':
                   d = 'p3/widget/viewer/GenomeAnnotation';
@@ -1388,7 +1381,7 @@ define([
                   d = 'p3/widget/viewer/ComprehensiveGenomeAnalysis';
                   break;
                 default:
-                  console.log('A viewer could not be found for id: ' + id);
+                  console.log('Using the default JobResult viewer. A viewer could not be found for id: ' + id);
               }
             }
             panelCtor = window.App.getConstructor(d);
@@ -1399,19 +1392,46 @@ define([
             panelCtor = window.App.getConstructor('p3/widget/viewer/ExperimentGroup');
             params.data = obj;
             break;
+          case 'csv':
+          case 'tsv':
+            var tsvCsvFilename = this.tsvCsvFilename = obj.name;
+            panelCtor = window.App.getConstructor('p3/widget/viewer/TSV_CSV');
+            params.file = { metadata: obj };
+            break;
           default:
-            panelCtor = window.App.getConstructor('p3/widget/viewer/File');
+            var tsvCsvFilename = this.tsvCsvFilename = obj.name;
+            var isTsv = false;
+            var keyList = Object.keys(tsvCsvFeatures);    // for older tsv files typed as txt
+            keyList.forEach(function (keyName) {
+              if (tsvCsvFilename.indexOf(keyName) >= 0) {
+                // key name is found
+                isTsv = true;
+              }
+            });
+            if (isTsv) {
+              panelCtor = window.App.getConstructor('p3/widget/viewer/TSV_CSV');
+            } else {
+              panelCtor = window.App.getConstructor('p3/widget/viewer/File');
+            }
             params.file = { metadata: obj };
         }
 
         Deferred.when(panelCtor, lang.hitch(this, function (Panel) {
-          if (!this.activePanel || !(this.activePanel instanceof Panel)) {
+          if ((!this.activePanel) || !(this.activePanel instanceof Panel) || this.activePanel instanceof JobResult) {
             if (this.activePanel) {
               this.removeChild(this.activePanel);
             }
 
             var newPanel = new Panel(params);
             var hideTimer;
+
+            if (newPanel.setActionPanel) { newPanel.setActionPanel(this.actionPanel); }
+
+            var _self = this;
+            Topic.subscribe('changeActionPanel', function (actionPanel) {
+              _self.actionPanel.set('selection', []);
+              _self.actionPanel.set('currentContainerWidget', newPanel);
+            });
 
             if (this.actionPanel) {
               this.actionPanel.set('currentContainerWidget', newPanel);
@@ -1468,7 +1488,7 @@ define([
             this.activePanel = newPanel;
           } else {
             this.activePanel.set('path', this.path);
-            if (this.activePaneal && 'clearSelection' in this.activePaneal) {
+            if (this.activePanel && 'clearSelection' in this.activePanel) {
               this.activePanel.clearSelection();
             }
           }
@@ -1515,5 +1535,6 @@ define([
       return this.buttons;
 
     }
+
   });
 });
