@@ -3,7 +3,7 @@ define([
   'dojo/dom-class', 'dijit/layout/ContentPane', 'dojo/dom-construct',
   '../formatter', '../TabContainer', 'dojo/_base/Deferred',
   'dojo/request', 'dojo/_base/lang', 'dojo/when',
-  '../ActionBar', '../FilterContainerActionBar', 'phyloview/PhyloTree',
+  '../ActionBar', '../FilterContainerActionBar', 'phyloview/PhyloTree', '../../WorkspaceManager',
   'd3/d3', 'phyloview/TreeNavSVG', '../../util/PathJoin', 'dijit/form/Button',
   'dijit/MenuItem', 'dijit/TooltipDialog', 'dijit/popup', '../SelectionToGroup', '../PerspectiveToolTip',
   'dijit/Dialog', '../ItemDetailPanel', 'dojo/query', 'FileSaver'
@@ -12,7 +12,7 @@ define([
   domClass, ContentPane, domConstruct,
   formatter, TabContainer, Deferred,
   xhr, lang, when,
-  ActionBar, ContainerActionBar, PhyloTree,
+  ActionBar, ContainerActionBar, PhyloTree, WorkspaceManager,
   d3, d3Tree, PathJoin, Button,
   MenuItem, TooltipDialog, popup,
   SelectionToGroup, PerspectiveToolTipDialog, Dialog, ItemDetailPanel, query, saveAs
@@ -108,24 +108,24 @@ define([
     name: 'Hide columns by % gaps (between)',
     id: 'hide_col_gaps_between'
   },
-    /* to be implemented in the future
-    {
-      name: "Hide seqs by identity (>=)",
-      id: "hide_seq_identity_greater"
-    },
-    {
-      name: "Hide seqs by identity (<=)",
-      id: "hide_seq_identity_less"
-    },
-    {
-      name: "Hide seqs by gaps (>=)",
-      id: "hide_seq_gaps_greater"
-    },
-    {
-      name: "Hide seqs by gaps (<=)",
-      id: "hide_seq_gaps_less"
-    },
-    */
+  /* to be implemented in the future
+  {
+    name: "Hide seqs by identity (>=)",
+    id: "hide_seq_identity_greater"
+  },
+  {
+    name: "Hide seqs by identity (<=)",
+    id: "hide_seq_identity_less"
+  },
+  {
+    name: "Hide seqs by gaps (>=)",
+    id: "hide_seq_gaps_greater"
+  },
+  {
+    name: "Hide seqs by gaps (<=)",
+    id: "hide_seq_gaps_less"
+  },
+  */
   {
     name: 'Reset',
     id: 'reset'
@@ -232,6 +232,7 @@ define([
 
       return def.promise;
     },
+
     onSetState: function (attr, oldVal, state) {
       console.log('MSA Viewer onSetState: ', state);
       if (state && state.search) {
@@ -245,15 +246,24 @@ define([
         }), lang.hitch(this, function (count) {
           this.showError('There are too many sequences in your query results (' + count + ').  Please reduce to below 500 Sequences.');
         }));
+      } else if (state.pathname.startsWith('/MSA/&path=')) {
+        var fileCheck = this.state.pathname.match(/path=..+?(?=&|$)/);
+        var objPath = fileCheck[0].split('=')[1];
+        WorkspaceManager.getObjects([objPath]).then(lang.hitch(this, function (objs) {
+          console.log('MSA viewer on file:', objs[0]);
+          this.myFasta = objs[0].data;
+          this.set('data', { 'alignment': objs[0].data, 'tree': '(,,,,)' });
+        }));
       }
     },
 
     showError: function (msg) {
       this.contentPane.set('content', '<div style="background:red; color: #fff;">' + msg + '</div>');
     },
+
     onSetData: function (attr, oldVal, data) {
       // console.log("data", data);
-      this.createDataMap();
+      // this.createDataMap();
       this.render();
     },
 
@@ -408,7 +418,8 @@ define([
       // domConstruct.place(combineDiv,msaDiv,"last");
       // this.contentPane.set('content', "<pre>" + JSON.stringify(this.data,null,3) + "</pre>");
       var msa_models = {
-        seqs: msa.io.clustal.parse(this.dataStats.clustal)
+        // seqs: msa.io.clustal.parse(this.dataStats.clustal)
+        seqs: msa.io.fasta.parse(this.myFasta)
       };
 
       var rearrangeSeqs = {};
@@ -457,12 +468,12 @@ define([
       this.tree.setTree(this.data.tree);
       // this.tree.setTree(this.data.tree);
 
-      var idMenuDivs = [];
-      this.tree.addLabels(this.alt_labels.genome_name, 'Genome Name');
-      idMenuDivs.push('<div class="wsActionTooltip" rel="Genome Name">Genome Name</div>');
-      this.tree.addLabels(this.alt_labels.patric_id, 'Gene ID');
-      idMenuDivs.push('<div class="wsActionTooltip" rel="Gene ID">Gene ID</div>');
-      idMenu.set('content', idMenuDivs.join(''));
+      // var idMenuDivs = [];
+      // this.tree.addLabels(this.alt_labels.genome_name, 'Genome Name');
+      // idMenuDivs.push('<div class="wsActionTooltip" rel="Genome Name">Genome Name</div>');
+      // this.tree.addLabels(this.alt_labels.patric_id, 'Gene ID');
+      // idMenuDivs.push('<div class="wsActionTooltip" rel="Gene ID">Gene ID</div>');
+      // idMenu.set('content', idMenuDivs.join(''));
 
       this.tree.startup();
       this.tree.selectLabels('Genome Name');
@@ -757,8 +768,8 @@ define([
           this.set('data', res);
         }));
       }
-
     },
+
     postCreate: function () {
       this.inherited(arguments);
       this.contentPane = new ContentPane({ region: 'center' });
@@ -1180,23 +1191,20 @@ define([
           this.containerActionBar.addAction(a[0], a[1], a[2], lang.hitch(this, a[3]), a[4], a[5]);
         }, this);
       }
-
       this.selectionActions.forEach(function (a) {
         this.selectionActionBar.addAction(a[0], a[1], a[2], lang.hitch(this, a[3]), a[4], a[5]);
       }, this);
-
     },
-    startup: function () {
 
+    startup: function () {
       if (this._started) {
         return;
       }
-
       this.watch('loading', lang.hitch(this, 'onSetLoading'));
       this.watch('data', lang.hitch(this, 'onSetData'));
       this.watch('selection', lang.hitch(this, 'onSelection'));
-
       this.inherited(arguments);
     }
+
   });
 });
