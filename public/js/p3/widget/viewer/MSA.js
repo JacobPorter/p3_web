@@ -250,9 +250,48 @@ define([
         var fileCheck = this.state.pathname.match(/path=..+?(?=&|$)/);
         var objPath = fileCheck[0].split('=')[1];
         WorkspaceManager.getObjects([objPath]).then(lang.hitch(this, function (objs) {
-          console.log('MSA viewer on file:', objs[0]);
+          // console.log('MSA viewer on file:', objs[0]);
           this.myFasta = objs[0].data;
-          this.set('data', { 'alignment': objs[0].data, 'tree': '(,,,,)' });
+          this.dataStats.fasta = this.myFasta;
+          var geneID = null;
+          var clustal = ['CLUSTAL'];
+          var fasta = [];
+          var ids = '(';
+          var seq = '';
+          var count = 0;
+          this.myFasta.split('\n').forEach(function (line) {
+            if (line.slice(0, 1) == '>') {
+              // var regex = /^>([^\s]+)\s+\[(.*?)\]/g;
+              // var headerInfo = regex.exec(line);
+              count += 1;
+              geneID = line.slice(1, line.length);
+              geneID = geneID.split(' ')[0];
+              // geneID = headerInfo[1];
+              if (seq.length > 0) {
+                clustal[clustal.length - 1] = clustal[clustal.length - 1] + seq;
+                fasta.push(seq);
+                console.log(seq);
+                seq = '';
+                ids = ids + ',' + geneID;
+              } else {
+                ids += geneID;
+              }
+              clustal.push(geneID + '\t');
+              fasta.push('>' + geneID);
+            } else {
+              seq += line.trim();
+            }
+          });
+          if (seq.length > 0) {
+            clustal[clustal.length - 1] = clustal[clustal.length - 1] + seq;
+            fasta.push(seq);
+          }
+          ids += ')';
+          this.dataStats.clustal = clustal.join('\n');
+          this.dataStats.tree_newick = ids;
+          this.numSequences = count;
+          this.dataStats.myFasta = fasta.join('\n');
+          this.set('data', { 'alignment': this.dataStats.myFasta, 'tree': ids });
         }));
       }
     },
@@ -263,6 +302,7 @@ define([
 
     onSetData: function (attr, oldVal, data) {
       // console.log("data", data);
+      console.log('MSA data: ', data);
       // this.createDataMap();
       this.render();
     },
@@ -277,22 +317,22 @@ define([
       // console.log("cur", cur);
       // console.log("this.itemDetailPanel", this.itemDetailPanel);
       this.selectionActionBar._setSelectionAttr(cur);
-      var self = this;
-      if (cur.length == 1) {
-        var curr_selection = cur[0].feature_id;
-        // console.log("curr_selection", curr_selection);
-        this.featureData.forEach(function (sel) {
-          // console.log("sel", sel);
-          // console.log("this.itemDetailPanel", self.itemDetailPanel);
-          if (sel.feature_id == curr_selection) {
-            self.itemDetailPanel.set('containerWidget', { containerType: 'feature_data' });
-            self.itemDetailPanel.set('selection', [sel]);
-          }
-        });
+      // var self = this;
+      // if (cur.length == 1) {
+      //   var curr_selection = cur[0].feature_id;
+      //   // console.log("curr_selection", curr_selection);
+      //   this.featureData.forEach(function (sel) {
+      //     // console.log("sel", sel);
+      //     // console.log("this.itemDetailPanel", self.itemDetailPanel);
+      //     if (sel.feature_id == curr_selection) {
+      //       self.itemDetailPanel.set('containerWidget', { containerType: 'feature_data' });
+      //       self.itemDetailPanel.set('selection', [sel]);
+      //     }
+      //   });
 
-      } else {
-        this.itemDetailPanel.set('selection', cur);
-      }
+      // } else {
+      // this.itemDetailPanel.set('selection', cur);
+      // }
     },
 
     createDataMap: function () {
@@ -400,10 +440,10 @@ define([
       var menuDiv = domConstruct.create('div', {}, this.contentPane.containerNode);
       var combineDiv = domConstruct.create('table', { style: { width: '100%' } }, this.contentPane.containerNode);// domConstruct.create("div",{"style":{"width":"100%"}},this.contentPane.containerNode);
       var combineRow = domConstruct.create('tr', {}, combineDiv);
-      var cell1 = domConstruct.create('td', { width: '30%' }, combineRow);
-      var cell2 = domConstruct.create('td', { width: '70%' }, combineRow);
-      var treeDiv = domConstruct.create('div', { id: this.id + 'tree-container' }, cell1);
-      treeDiv.setAttribute('style', 'padding-top:106px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
+      // var cell1 = domConstruct.create('td', { width: '30%' }, combineRow);
+      var cell2 = domConstruct.create('td', { width: '100%' }, combineRow);
+      // var treeDiv = domConstruct.create('div', { id: this.id + 'tree-container' }, cell1);
+      // treeDiv.setAttribute('style', 'padding-top:106px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
       var msaDiv = domConstruct.create('div', { style: { width: '100%' } }, cell2);
       msaDiv.style.display = 'inline-block';
       // msaDiv.style.width="64%";
@@ -418,15 +458,16 @@ define([
       // domConstruct.place(combineDiv,msaDiv,"last");
       // this.contentPane.set('content', "<pre>" + JSON.stringify(this.data,null,3) + "</pre>");
       var msa_models = {
-        // seqs: msa.io.clustal.parse(this.dataStats.clustal)
-        seqs: msa.io.fasta.parse(this.myFasta)
+        seqs: msa.io.clustal.parse(this.dataStats.clustal)
+        // seqs: msa.io.fasta.parse(this.myFasta)
       };
 
       var rearrangeSeqs = {};
       msa_models.seqs.forEach(lang.hitch(this, function (s) {
         rearrangeSeqs[s.name] = s;
+        s.id = s.name;
       }));
-
+      console.log('rearrangeSeqs', rearrangeSeqs);
       var opts = {};
       // set your custom properties
       // @see: https://github.com/greenify/biojs-vis-msa/tree/master/src/g
@@ -444,7 +485,7 @@ define([
         overviewbox: false,
         seqlogo: true,
         sequences: true,
-        labelName: false,
+        labelName: true,
         labelId: false
       };
       opts.conf = {
@@ -463,11 +504,11 @@ define([
         rowHeight: 14.04
       };
 
-      this.tree = new d3Tree({ selectionTarget: this });
-      this.tree.d3Tree('#' + this.id + 'tree-container', { phylogram: this.phylogram, fontSize: 12 });
-      this.tree.setTree(this.data.tree);
+      // this.tree = new d3Tree({ selectionTarget: this });
+      // this.tree.d3Tree('#' + this.id + 'tree-container', { phylogram: this.phylogram, fontSize: 12 });
       // this.tree.setTree(this.data.tree);
 
+      // JSP: removed.
       // var idMenuDivs = [];
       // this.tree.addLabels(this.alt_labels.genome_name, 'Genome Name');
       // idMenuDivs.push('<div class="wsActionTooltip" rel="Genome Name">Genome Name</div>');
@@ -475,16 +516,16 @@ define([
       // idMenuDivs.push('<div class="wsActionTooltip" rel="Gene ID">Gene ID</div>');
       // idMenu.set('content', idMenuDivs.join(''));
 
-      this.tree.startup();
-      this.tree.selectLabels('Genome Name');
-      this.tree.update();
+      // this.tree.startup();
+      // this.tree.selectLabels('Genome Name');
+      // this.tree.update();
 
-      Object.keys(rearrangeSeqs).forEach(lang.hitch(this, function (fid) {
-        rearrangeSeqs[fid].py = this.tree.idToHeight[fid];
-      }));
-      msa_models.seqs.sort(function (a, b) {
-        return a.py - b.py;
-      });
+      // Object.keys(rearrangeSeqs).forEach(lang.hitch(this, function (fid) {
+      //   rearrangeSeqs[fid].py = this.tree.idToHeight[fid];
+      // }));
+      // msa_models.seqs.sort(function (a, b) {
+      //   return a.py - b.py;
+      // });
 
       // init msa
       var m = new msa.msa(opts);
@@ -520,14 +561,14 @@ define([
         popup.close(colorMenu);
       });
 
-      on(idMenu.domNode, 'click', lang.hitch(this, function (evt) {
-        var rel = evt.target.attributes.rel.value;
-        // var sel = idMenu.selection;
-        delete idMenu.selection;
+      // on(idMenu.domNode, 'click', lang.hitch(this, function (evt) {
+      //   var rel = evt.target.attributes.rel.value;
+      //   // var sel = idMenu.selection;
+      //   delete idMenu.selection;
 
-        this.tree.selectLabels(rel);
-        popup.close(idMenu);
-      }));
+      //   this.tree.selectLabels(rel);
+      //   popup.close(idMenu);
+      // }));
 
       on(filterMenu.domNode, 'click', lang.hitch(this, function (evt) {
         var rel = evt.target.attributes.rel.value;
@@ -551,8 +592,8 @@ define([
                 hidden.push(i);
               }
             }
-            treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
-            this.tree.update();
+            // treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
+            // this.tree.update();
             cell2.setAttribute('style', 'padding-top:105px;');
             m.g.columns.set('hidden', hidden);
             m.g.vis.set('seqlogo', false);
@@ -567,8 +608,8 @@ define([
                 hidden.push(i);
               }
             }
-            treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
-            this.tree.update();
+            // treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
+            // this.tree.update();
             cell2.setAttribute('style', 'padding-top:105px;');
             m.g.columns.set('hidden', hidden);
             m.g.vis.set('seqlogo', false);
@@ -585,8 +626,8 @@ define([
                 hidden.push(i);
               }
             }
-            treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
-            this.tree.update();
+            // treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
+            // this.tree.update();
             cell2.setAttribute('style', 'padding-top:105px;');
             m.g.columns.set('hidden', hidden);
             m.g.vis.set('seqlogo', false);
@@ -608,8 +649,8 @@ define([
                 hidden.push(i);
               }
             }
-            treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
-            this.tree.update();
+            // treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
+            // this.tree.update();
             cell2.setAttribute('style', 'padding-top:105px;');
             m.g.columns.set('hidden', hidden);
             m.g.vis.set('seqlogo', false);
@@ -631,8 +672,8 @@ define([
                 hidden.push(i);
               }
             }
-            treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
-            this.tree.update();
+            // treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
+            // this.tree.update();
             cell2.setAttribute('style', 'padding-top:105px;');
             m.g.columns.set('hidden', hidden);
             m.g.vis.set('seqlogo', false);
@@ -656,8 +697,8 @@ define([
                 hidden.push(i);
               }
             }
-            treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
-            this.tree.update();
+            // treeDiv.setAttribute('style', 'padding-top:0px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
+            // this.tree.update();
             cell2.setAttribute('style', 'padding-top:105px;');
             m.g.columns.set('hidden', hidden);
             m.g.vis.set('seqlogo', false);
@@ -670,8 +711,8 @@ define([
                 return el.set('hidden', false);
               }
             });
-            treeDiv.setAttribute('style', 'padding-top:106px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
-            this.tree.update();
+            // treeDiv.setAttribute('style', 'padding-top:106px; width:100%; vertical-align:top; overflow-x:visible; display:inline-block; border-right:1px solid grey;');
+            // this.tree.update();
             cell2.setAttribute('style', 'padding-top:0px;');
             m.g.vis.set('seqlogo', true);
             break;
@@ -724,7 +765,7 @@ define([
       // m.el.parentElement.insertBefore(menuOpts.el, combineDiv);
       // var initialHidden = 0;
       // var treeDiv2=document.getElementsByClassName("tnt_groupDiv");
-      var treeHeight = parseInt(treeDiv.childNodes[0].getAttribute('height'));
+      // var treeHeight = parseInt(treeDiv.childNodes[0].getAttribute('height'));
       // var msaDiv=document.getElementsByClassName("biojs_msa_stage");
       // var msaDiv=document.getElementById("msaDiv");
       msaDiv.style.display = 'inline-block';
@@ -733,7 +774,7 @@ define([
       msaDiv.style.overflowY = 'hidden';
       msaDiv.style.verticalAlign = 'bottom';
       msaDiv.style.paddingBottom = '10px';
-      msaDiv.style.height = (treeHeight + 115).toString() + 'px';
+      // msaDiv.style.height = (treeHeight + 115).toString() + 'px';
       // treeLoaded = true;
     },
 
@@ -868,31 +909,32 @@ define([
         },
         true
       ],
-      [
-        'IDSelection',
-        'fa icon-pencil-square fa-2x',
-        {
-          label: 'ID TYPE',
-          persistent: true,
-          validTypes: ['*'],
-          validContainerTypes: ['*'],
-          tooltip: 'Set ID Type',
-          tooltipDialog: idMenu,
-          ignoreDataType: true
-        },
-        function (selection) {
-          // console.log("Toggle Item Detail Panel",this.itemDetailPanel.id, this.itemDetailPanel);
+      // JSP
+      // [
+      //   'IDSelection',
+      //   'fa icon-pencil-square fa-2x',
+      //   {
+      //     label: 'ID TYPE',
+      //     persistent: true,
+      //     validTypes: ['*'],
+      //     validContainerTypes: ['*'],
+      //     tooltip: 'Set ID Type',
+      //     tooltipDialog: idMenu,
+      //     ignoreDataType: true
+      //   },
+      //   function (selection) {
+      //     // console.log("Toggle Item Detail Panel",this.itemDetailPanel.id, this.itemDetailPanel);
 
-          idMenu.selection = selection;
-          // console.log("ViewFasta Sel: ", this.selectionActionBar._actions.ViewFASTA.options.tooltipDialog)
-          popup.open({
-            popup: this.selectionActionBar._actions.IDSelection.options.tooltipDialog,
-            around: this.selectionActionBar._actions.IDSelection.button,
-            orient: ['below']
-          });
-        },
-        true
-      ],
+      //     idMenu.selection = selection;
+      //     // console.log("ViewFasta Sel: ", this.selectionActionBar._actions.ViewFASTA.options.tooltipDialog)
+      //     popup.open({
+      //       popup: this.selectionActionBar._actions.IDSelection.options.tooltipDialog,
+      //       around: this.selectionActionBar._actions.IDSelection.button,
+      //       orient: ['below']
+      //     });
+      //   },
+      //   true
+      // ],
       [
         'FilterSelection',
         'fa icon-filter fa-2x',
@@ -918,46 +960,46 @@ define([
         },
         true
       ],
-      [
-        'AddGroup',
-        'fa icon-object-group fa-2x',
-        {
-          label: 'GROUP',
-          ignoreDataType: true,
-          multiple: true,
-          validTypes: ['*'],
-          tooltip: 'Add selection to a new or existing group',
-          validContainerTypes: ['*']
-        },
-        function (selection, containerWidget) {
-          // console.log("Add Items to Group", selection);
-          var dlg = new Dialog({ title: 'Add selected items to group' });
-          var type = 'feature_data';
+      // [
+      //   'AddGroup',
+      //   'fa icon-object-group fa-2x',
+      //   {
+      //     label: 'GROUP',
+      //     ignoreDataType: true,
+      //     multiple: true,
+      //     validTypes: ['*'],
+      //     tooltip: 'Add selection to a new or existing group',
+      //     validContainerTypes: ['*']
+      //   },
+      //   function (selection, containerWidget) {
+      //     // console.log("Add Items to Group", selection);
+      //     var dlg = new Dialog({ title: 'Add selected items to group' });
+      //     var type = 'feature_data';
 
-          if (!type) {
-            console.error('Missing type for AddGroup');
-            return;
-          }
-          var stg = new SelectionToGroup({
-            selection: selection,
-            type: type,
-            inputType: 'feature_data',
-            idType: this.dataStats.idType,
-            path: null // set by type
-          });
-          on(dlg.domNode, 'dialogAction', function (evt) {
-            dlg.hide();
-            setTimeout(function () {
-              dlg.destroy();
-            }, 2000);
-          });
-          domConstruct.place(stg.domNode, dlg.containerNode, 'first');
-          stg.startup();
-          dlg.startup();
-          dlg.show();
-        },
-        false
-      ],
+      //     if (!type) {
+      //       console.error('Missing type for AddGroup');
+      //       return;
+      //     }
+      //     var stg = new SelectionToGroup({
+      //       selection: selection,
+      //       type: type,
+      //       inputType: 'feature_data',
+      //       idType: this.dataStats.idType,
+      //       path: null // set by type
+      //     });
+      //     on(dlg.domNode, 'dialogAction', function (evt) {
+      //       dlg.hide();
+      //       setTimeout(function () {
+      //         dlg.destroy();
+      //       }, 2000);
+      //     });
+      //     domConstruct.place(stg.domNode, dlg.containerNode, 'first');
+      //     stg.startup();
+      //     dlg.startup();
+      //     dlg.show();
+      //   },
+      //   false
+      // ],
       [
         'MultipleSeqAlignmentFeatures',
         'fa icon-alignment fa-2x',
@@ -982,146 +1024,146 @@ define([
         },
         false
       ],
-      [
-        'ViewFeatureItem',
-        'MultiButton fa icon-selection-Feature fa-2x',
-        {
-          label: 'FEATURE',
-          validTypes: ['*'],
-          multiple: false,
-          tooltip: 'Switch to Feature View. Press and Hold for more options.',
-          validContainerTypes: ['*'],
-          pressAndHold: function (selection, button, opts, evt) {
-            console.log('PressAndHold');
-            console.log('Selection: ', selection, selection[0]);
-            popup.open({
-              popup: new PerspectiveToolTipDialog({
-                perspective: 'Feature',
-                perspectiveUrl: '/view/Feature/' + selection[0].feature_id
-              }),
-              around: button,
-              orient: ['below']
-            });
-          }
-        },
-        function (selection) {
-          var sel = selection[0];
-          Topic.publish('/navigate', { href: '/view/Feature/' + sel.feature_id + '#view_tab=overview', target: 'blank' });
-        },
-        false
-      ],
-      [
-        'ViewFeatureItems',
-        'MultiButton fa icon-selection-FeatureList fa-2x',
-        {
-          label: 'FEATURES',
-          validTypes: ['*'],
-          multiple: true,
-          min: 2,
-          max: 5000,
-          tooltip: 'Switch to Feature List View. Press and Hold for more options.',
-          validContainerTypes: ['*'],
-          pressAndHold: function (selection, button, opts, evt) {
-            console.log('PressAndHold');
-            console.log('Selection: ', selection, selection[0]);
-            popup.open({
-              popup: new PerspectiveToolTipDialog({
-                perspective: 'FeatureList',
-                perspectiveUrl: '/view/FeatureList/?in(feature_id,(' + selection.map(function (x) {
-                  return x.feature_id;
-                }).join(',') + '))'
-              }),
-              around: button,
-              orient: ['below']
-            });
+      // [
+      //   'ViewFeatureItem',
+      //   'MultiButton fa icon-selection-Feature fa-2x',
+      //   {
+      //     label: 'FEATURE',
+      //     validTypes: ['*'],
+      //     multiple: false,
+      //     tooltip: 'Switch to Feature View. Press and Hold for more options.',
+      //     validContainerTypes: ['*'],
+      //     pressAndHold: function (selection, button, opts, evt) {
+      //       console.log('PressAndHold');
+      //       console.log('Selection: ', selection, selection[0]);
+      //       popup.open({
+      //         popup: new PerspectiveToolTipDialog({
+      //           perspective: 'Feature',
+      //           perspectiveUrl: '/view/Feature/' + selection[0].feature_id
+      //         }),
+      //         around: button,
+      //         orient: ['below']
+      //       });
+      //     }
+      //   },
+      //   function (selection) {
+      //     var sel = selection[0];
+      //     Topic.publish('/navigate', { href: '/view/Feature/' + sel.feature_id + '#view_tab=overview', target: 'blank' });
+      //   },
+      //   false
+      // ],
+      // [
+      //   'ViewFeatureItems',
+      //   'MultiButton fa icon-selection-FeatureList fa-2x',
+      //   {
+      //     label: 'FEATURES',
+      //     validTypes: ['*'],
+      //     multiple: true,
+      //     min: 2,
+      //     max: 5000,
+      //     tooltip: 'Switch to Feature List View. Press and Hold for more options.',
+      //     validContainerTypes: ['*'],
+      //     pressAndHold: function (selection, button, opts, evt) {
+      //       console.log('PressAndHold');
+      //       console.log('Selection: ', selection, selection[0]);
+      //       popup.open({
+      //         popup: new PerspectiveToolTipDialog({
+      //           perspective: 'FeatureList',
+      //           perspectiveUrl: '/view/FeatureList/?in(feature_id,(' + selection.map(function (x) {
+      //             return x.feature_id;
+      //           }).join(',') + '))'
+      //         }),
+      //         around: button,
+      //         orient: ['below']
+      //       });
 
-          }
-        },
-        function (selection) {
-          Topic.publish('/navigate', {
-            href: '/view/FeatureList/?in(feature_id,(' + selection.map(function (x) {
-              return x.feature_id;
-            }).join(',') + '))',
-            target: 'blank'
-          });
-        },
-        false
-      ],
-      [
-        'ViewGenomeItem',
-        'MultiButton fa icon-selection-Genome fa-2x',
-        {
-          label: 'GENOME',
-          validTypes: ['*'],
-          multiple: false,
-          tooltip: 'Switch to Genome View. Press and Hold for more options.',
-          ignoreDataType: true,
-          validContainerTypes: ['*'],
-          pressAndHold: function (selection, button, opts, evt) {
-            console.log('PressAndHold');
-            console.log('Selection: ', selection, selection[0]);
-            popup.open({
-              popup: new PerspectiveToolTipDialog({
-                perspective: 'Genome',
-                perspectiveUrl: '/view/Genome/' + selection[0].genome_id
-              }),
-              around: button,
-              orient: ['below']
-            });
+      //     }
+      //   },
+      //   function (selection) {
+      //     Topic.publish('/navigate', {
+      //       href: '/view/FeatureList/?in(feature_id,(' + selection.map(function (x) {
+      //         return x.feature_id;
+      //       }).join(',') + '))',
+      //       target: 'blank'
+      //     });
+      //   },
+      //   false
+      // ],
+      // [
+      //   'ViewGenomeItem',
+      //   'MultiButton fa icon-selection-Genome fa-2x',
+      //   {
+      //     label: 'GENOME',
+      //     validTypes: ['*'],
+      //     multiple: false,
+      //     tooltip: 'Switch to Genome View. Press and Hold for more options.',
+      //     ignoreDataType: true,
+      //     validContainerTypes: ['*'],
+      //     pressAndHold: function (selection, button, opts, evt) {
+      //       console.log('PressAndHold');
+      //       console.log('Selection: ', selection, selection[0]);
+      //       popup.open({
+      //         popup: new PerspectiveToolTipDialog({
+      //           perspective: 'Genome',
+      //           perspectiveUrl: '/view/Genome/' + selection[0].genome_id
+      //         }),
+      //         around: button,
+      //         orient: ['below']
+      //       });
 
-          }
-        },
-        function (selection) {
-          var sel = selection[0];
-          // console.log("sel: ", sel)
-          // console.log("Nav to: ", "/view/Genome/" + sel.genome_id);
-          Topic.publish('/navigate', { href: '/view/Genome/' + sel.genome_id, target: 'blank' });
-        },
-        false
-      ],
-      [
-        'ViewGenomeItems',
-        'MultiButton fa icon-selection-GenomeList fa-2x',
-        {
-          label: 'GENOMES',
-          validTypes: ['*'],
-          multiple: true,
-          min: 2,
-          max: 1000,
-          tooltip: 'Switch to Genome List View. Press and Hold for more options.',
-          ignoreDataType: true,
-          validContainerTypes: ['*'],
-          pressAndHold: function (selection, button, opts, evt) {
-            var map = {};
-            selection.forEach(function (sel) {
-              if (!map[sel.genome_id]) {
-                map[sel.genome_id] = true;
-              }
-            });
-            var genome_ids = Object.keys(map);
-            popup.open({
-              popup: new PerspectiveToolTipDialog({
-                perspective: 'GenomeList',
-                perspectiveUrl: '/view/GenomeList/?in(genome_id,(' + genome_ids.join(',') + '))'
-              }),
-              around: button,
-              orient: ['below']
-            });
+      //     }
+      //   },
+      //   function (selection) {
+      //     var sel = selection[0];
+      //     // console.log("sel: ", sel)
+      //     // console.log("Nav to: ", "/view/Genome/" + sel.genome_id);
+      //     Topic.publish('/navigate', { href: '/view/Genome/' + sel.genome_id, target: 'blank' });
+      //   },
+      //   false
+      // ],
+      // [
+      //   'ViewGenomeItems',
+      //   'MultiButton fa icon-selection-GenomeList fa-2x',
+      //   {
+      //     label: 'GENOMES',
+      //     validTypes: ['*'],
+      //     multiple: true,
+      //     min: 2,
+      //     max: 1000,
+      //     tooltip: 'Switch to Genome List View. Press and Hold for more options.',
+      //     ignoreDataType: true,
+      //     validContainerTypes: ['*'],
+      //     pressAndHold: function (selection, button, opts, evt) {
+      //       var map = {};
+      //       selection.forEach(function (sel) {
+      //         if (!map[sel.genome_id]) {
+      //           map[sel.genome_id] = true;
+      //         }
+      //       });
+      //       var genome_ids = Object.keys(map);
+      //       popup.open({
+      //         popup: new PerspectiveToolTipDialog({
+      //           perspective: 'GenomeList',
+      //           perspectiveUrl: '/view/GenomeList/?in(genome_id,(' + genome_ids.join(',') + '))'
+      //         }),
+      //         around: button,
+      //         orient: ['below']
+      //       });
 
-          }
-        },
-        function (selection) {
-          var map = {};
-          selection.forEach(function (sel) {
-            if (!map[sel.genome_id]) {
-              map[sel.genome_id] = true;
-            }
-          });
-          var genome_ids = Object.keys(map);
-          Topic.publish('/navigate', { href: '/view/GenomeList/?in(genome_id,(' + genome_ids.join(',') + '))', target: 'blank' });
-        },
-        false
-      ],
+      //     }
+      //   },
+      //   function (selection) {
+      //     var map = {};
+      //     selection.forEach(function (sel) {
+      //       if (!map[sel.genome_id]) {
+      //         map[sel.genome_id] = true;
+      //       }
+      //     });
+      //     var genome_ids = Object.keys(map);
+      //     Topic.publish('/navigate', { href: '/view/GenomeList/?in(genome_id,(' + genome_ids.join(',') + '))', target: 'blank' });
+      //   },
+      //   false
+      // ],
       [
         'Snapshot',
         'fa icon-download fa-2x',
