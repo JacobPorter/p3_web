@@ -132,16 +132,20 @@ define([
   }];
 
   var visualopts = [{
-    name: 'Conserv',
+    name: 'Conserved weight (entropy)',
     id: 'conserv'
   },
   {
-    name: 'Seq logo',
+    name: 'Sequence logo',
     id: 'seqlogo'
   },
   {
     name: 'Overview box',
     id: 'overviewbox'
+  },
+  {
+    name: 'Markers',
+    id: 'markers'
   }];
 
   // var noMenu = ["10_import", "15_ordering", "20_filter", "30_selection","40_vis", "70_extra", "90_help", "95_debug"];
@@ -517,12 +521,13 @@ define([
         opts.colorscheme = { scheme: 'nucleotide' };
       }
       opts.vis = {
-        conserv: false,
+        conserv: true,
         overviewbox: false,
         seqlogo: true,
         sequences: true,
         labelName: true,
-        labelId: true
+        labelId: true,
+        markers: true
       };
       opts.conf = {
         dropImport: true,
@@ -605,6 +610,29 @@ define([
       //   this.tree.selectLabels(rel);
       //   popup.close(idMenu);
       // }));
+
+      on(visualMenu.domNode, 'click', lang.hitch(this, function (evt) {
+        var rel = evt.target.attributes.rel.value;
+        switch (rel) {
+          case 'conserv':
+            var value = m.g.vis.get('conserv');
+            m.g.vis.set('conserv', !value);
+            break;
+          case 'overviewbox':
+            var value = m.g.vis.get('overviewbox');
+            m.g.vis.set('overviewbox', !value);
+            break;
+          case 'seqlogo':
+            var value = m.g.vis.get('seqlogo');
+            m.g.vis.set('seqlogo', !value);
+            break;
+          case 'markers':
+            var value = m.g.vis.get('markers');
+            m.g.vis.set('markers', !value);
+            break;
+        }
+        popup.close(visualMenu);
+      }));
 
       on(filterMenu.domNode, 'click', lang.hitch(this, function (evt) {
         var rel = evt.target.attributes.rel.value;
@@ -774,6 +802,17 @@ define([
           // console.log("this.dataStats.fasta ", this.dataStats.fasta);
           saveAs(new Blob([this.dataStats.fasta]), 'PATRIC_msa.fasta');
         }
+        // else if (rel == 'jalview') {
+        //   // share via jalview
+        //   var url = m.g.config.get('url');
+        //   if (url.indexOf('localhost') || url === 'dragimport') {
+        //     m.utils.export.publishWeb(m, function (link) {
+        //       m.utils.export.openInJalview(link, m.g.colorscheme.get('scheme'));
+        //     });
+        //   } else {
+        //     m.utils.export.openInJalview(url, m.g.colorscheme.get('scheme'));
+        //   }
+        // }
         // else if (rel == 'tree-svg') {
         //   saveAs(new Blob([query('svg')[0].outerHTML]), 'PATRIC_msa_tree.svg');
         // }
@@ -814,38 +853,38 @@ define([
       // treeLoaded = true;
     },
 
-    setTreeType: function (treeType) {
-      if (this.phylogram && treeType == 'cladogram') {
-        this.togglePhylo();
-      }
-      else if ((!this.phylogram) && treeType == 'phylogram') {
-        this.togglePhylo();
-      }
-    },
+    // setTreeType: function (treeType) {
+    //   if (this.phylogram && treeType == 'cladogram') {
+    //     this.togglePhylo();
+    //   }
+    //   else if ((!this.phylogram) && treeType == 'phylogram') {
+    //     this.togglePhylo();
+    //   }
+    // },
 
-    togglePhylo: function () {
-      this.phylogram = !this.phylogram;
-      this.tree.setPhylogram(this.phylogram);
-      // this.typeButton.set("label", this.phylogram ? "cladogram" : "phylogram");
-    },
+    // togglePhylo: function () {
+    //   this.phylogram = !this.phylogram;
+    //   this.tree.setPhylogram(this.phylogram);
+    //   // this.typeButton.set("label", this.phylogram ? "cladogram" : "phylogram");
+    // },
 
-    doAlignment: function () {
-      console.log('doAlignment()');
-      // console.log("this.state.search ", this.state.search);
-      this.set('loading', true);
-      if (this.state && this.state.search) {
-        var q = this.state.search + '&limit(' + this.maxSequences + ')';
-        if (this.state.pathname.indexOf('dna') !== -1) {
-          this.alignType = 'dna';
-        }
-        console.log('RUN MSA Against: ', q);
-        return when(window.App.api.data('multipleSequenceAlignment', [q, this.alignType]), lang.hitch(this, function (res) {
-          console.log('MSA Results: ', res);
-          this.set('loading', false);
-          this.set('data', res);
-        }));
-      }
-    },
+    // doAlignment: function () {
+    //   console.log('doAlignment()');
+    //   // console.log("this.state.search ", this.state.search);
+    //   this.set('loading', true);
+    //   if (this.state && this.state.search) {
+    //     var q = this.state.search + '&limit(' + this.maxSequences + ')';
+    //     if (this.state.pathname.indexOf('dna') !== -1) {
+    //       this.alignType = 'dna';
+    //     }
+    //     console.log('RUN MSA Against: ', q);
+    //     return when(window.App.api.data('multipleSequenceAlignment', [q, this.alignType]), lang.hitch(this, function (res) {
+    //       console.log('MSA Results: ', res);
+    //       this.set('loading', false);
+    //       this.set('data', res);
+    //     }));
+    //   }
+    // },
 
     postCreate: function () {
       this.inherited(arguments);
@@ -858,69 +897,69 @@ define([
         splitter: false,
         currentContainerWidget: this
       });
-      this.itemDetailPanel = new ItemDetailPanel({
-        region: 'right',
-        style: 'width:300px',
-        splitter: true,
-        layoutPriority: 1,
-        containerWidget: this
-      });
+      // this.itemDetailPanel = new ItemDetailPanel({
+      //   region: 'right',
+      //   style: 'width:300px',
+      //   splitter: true,
+      //   layoutPriority: 1,
+      //   containerWidget: this
+      // });
       this.addChild(this.selectionActionBar);
-      this.addChild(this.itemDetailPanel);
-      this.itemDetailPanel.startup();
+      // this.addChild(this.itemDetailPanel);
+      // this.itemDetailPanel.startup();
       this.setupActions();
     },
 
     selectionActions: [
-      [
-        'ToggleItemDetail',
-        'fa icon-chevron-circle-left fa-2x',
-        {
-          label: 'DETAILS',
-          persistent: true,
-          validTypes: ['*'],
-          tooltip: 'Toggle Details Pane'
-        },
-        function (selection, container, button) {
-          // console.log("Toggle Item Detail Panel",this.itemDetailPanel.id, this.itemDetailPanel);
+      // [
+      //   'ToggleItemDetail',
+      //   'fa icon-chevron-circle-right fa-2x',
+      //   {
+      //     label: 'HIDE',
+      //     persistent: true,
+      //     validTypes: ['*'],
+      //     tooltip: 'Toggle Details Pane'
+      //   },
+      //   function (selection, container, button) {
+      //     // console.log("Toggle Item Detail Panel",this.itemDetailPanel.id, this.itemDetailPanel);
 
-          var children = this.getChildren();
-          // console.log("Children: ", children);
-          if (children.some(function (child) {
-            return this.itemDetailPanel && (child.id == this.itemDetailPanel.id);
-          }, this)) {
-            // console.log('Remove Item Detail Panel');
-            this.removeChild(this.itemDetailPanel);
-            this.render();
-            // console.log('Button Node: ', button);
+      //     var children = this.getChildren();
+      //     // console.log("Children: ", children);
+      //     if (children.some(function (child) {
+      //       return this.itemDetailPanel && (child.id == this.itemDetailPanel.id);
+      //     }, this)) {
+      //       // console.log('Remove Item Detail Panel');
+      //       this.removeChild(this.itemDetailPanel);
+      //       this.render();
+      //       // console.log('Button Node: ', button);
 
-            query('.ActionButtonText', button).forEach(function (node) {
-              node.innerHTML = 'DETAILS';
-            });
+      //       query('.ActionButtonText', button).forEach(function (node) {
+      //         node.innerHTML = 'DETAILS';
+      //       });
 
-            query('.ActionButton', button).forEach(function (node) {
-              // console.log('ActionButtonNode: ', node);
-              domClass.remove(node, 'icon-chevron-circle-right');
-              domClass.add(node, 'icon-chevron-circle-left');
-            });
-          }
-          else {
-            // console.log("Re-add child: ", this.itemDetailPanel);
-            this.addChild(this.itemDetailPanel);
-            this.render();
-            query('.ActionButtonText', button).forEach(function (node) {
-              node.innerHTML = 'HIDE';
-            });
+      //       query('.ActionButton', button).forEach(function (node) {
+      //         // console.log('ActionButtonNode: ', node);
+      //         domClass.remove(node, 'icon-chevron-circle-right');
+      //         domClass.add(node, 'icon-chevron-circle-left');
+      //       });
+      //     }
+      //     else {
+      //       // console.log("Re-add child: ", this.itemDetailPanel);
+      //       this.addChild(this.itemDetailPanel);
+      //       this.render();
+      //       query('.ActionButtonText', button).forEach(function (node) {
+      //         node.innerHTML = 'HIDE';
+      //       });
 
-            query('.ActionButton', button).forEach(function (node) {
-              // console.log('ActionButtonNode: ', node);
-              domClass.remove(node, 'icon-chevron-circle-left');
-              domClass.add(node, 'icon-chevron-circle-right');
-            });
-          }
-        },
-        true
-      ],
+      //       query('.ActionButton', button).forEach(function (node) {
+      //         // console.log('ActionButtonNode: ', node);
+      //         domClass.remove(node, 'icon-chevron-circle-left');
+      //         domClass.add(node, 'icon-chevron-circle-right');
+      //       });
+      //     }
+      //   },
+      //   true
+      // ],
       [
         'ColorSelection',
         'fa icon-paint-brush fa-2x',
@@ -976,7 +1015,7 @@ define([
         'FilterSelection',
         'fa icon-filter fa-2x',
         {
-          label: 'Filter',
+          label: 'FILTER',
           persistent: true,
           validTypes: ['*'],
           validContainerTypes: ['*'],
@@ -992,6 +1031,31 @@ define([
           popup.open({
             popup: this.selectionActionBar._actions.FilterSelection.options.tooltipDialog,
             around: this.selectionActionBar._actions.FilterSelection.button,
+            orient: ['below']
+          });
+        },
+        true
+      ],
+      [
+        'VisualOptions',
+        'fa icon-eye fa-2x',
+        {
+          label: 'VISUAL',
+          persistent: true,
+          validTypes: ['*'],
+          validContainerTypes: ['*'],
+          tooltip: 'Visualization options',
+          tooltipDialog: visualMenu,
+          ignoreDataType: true
+        },
+        function (selection) {
+          // console.log("Toggle Item Detail Panel",this.itemDetailPanel.id, this.itemDetailPanel);
+
+          visualMenu.selection = selection;
+          // console.log("ViewFasta Sel: ", this.selectionActionBar._actions.ViewFASTA.options.tooltipDialog)
+          popup.open({
+            popup: this.selectionActionBar._actions.VisualOptions.options.tooltipDialog,
+            around: this.selectionActionBar._actions.VisualOptions.button,
             orient: ['below']
           });
         },
@@ -1249,6 +1313,7 @@ define([
           snapMenuDivs.push('<div class="wsActionTooltip" rel="msa-img">MSA image</div>');
           snapMenuDivs.push('<div class="wsActionTooltip" rel="msa-clustal">MSA clustal</div>');
           snapMenuDivs.push('<div class="wsActionTooltip" rel="msa-fasta">MSA fasta</div>');
+          // snapMenuDivs.push('<div class="wsActionTooltip" rel="jalview">Jalview link</div>');
           // snapMenuDivs.push('<div class="wsActionTooltip" rel="tree-svg">Tree svg</div>');
           // snapMenuDivs.push('<div class="wsActionTooltip" rel="tree-newick">Tree newick</div>');
 
