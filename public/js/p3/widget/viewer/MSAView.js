@@ -302,7 +302,11 @@ define([
             // var headerInfo = regex.exec(line);
             count += 1;
             geneID = line.slice(1, line.length);
+            // console.log(geneID);
             geneID = geneID.split(' ')[0];
+
+            geneID = geneID.replaceAll('|', ':');
+            // console.log(geneID);
             // geneID = headerInfo[1];
             if (seq.length > 0) {
               clustal[clustal.length - 1] = clustal[clustal.length - 1] + seq;
@@ -328,6 +332,7 @@ define([
         // this.dataStats.tree_newick = ids;
         this.numSequences = count;
         this.dataStats.fasta = fasta.join('\n');
+        // console.log(this.dataStats.fasta);
         this.loading = false;
         this.render();
         // this.set('data', { 'alignment': this.dataStats.myFasta, 'tree': ids });
