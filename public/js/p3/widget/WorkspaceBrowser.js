@@ -623,7 +623,11 @@ define([
         tooltip: 'View Aligned Fasta'
       }, function (selection) {
         var path = this.selection[0].path; // .get('selection.path');
-        Topic.publish('/navigate', { href: '/view/MSA2/&path=' + path, target: 'blank' });
+        var alignType = 'protein';
+        if (this.selection[0].type.includes('dna')) {
+          alignType = 'dna';
+        }
+        Topic.publish('/navigate', { href: '/view/MSAView/&alignType=' + alignType + '&path=' + path, target: 'blank' });
       }, false);
 
       this.browserHeader.addAction('ViewExperimentSummary', 'fa icon-eye fa-2x', {
@@ -750,35 +754,35 @@ define([
 
       this.actionPanel.addAction(
         'GroupExplore', 'fa icon-venn_circles fa-2x', {
-        label: 'VennDiag',
-        ignoreDataType: false,
-        allowMultiTypes: false,
-        min: 2,
-        max: 3,
-        multiple: true,
-        validTypes: ['genome_group', 'feature_group', 'experiment_group'],
-        tooltip: 'Select two or three groups to compare'
-      }, function (selection, containerWidget) {
+          label: 'VennDiag',
+          ignoreDataType: false,
+          allowMultiTypes: false,
+          min: 2,
+          max: 3,
+          multiple: true,
+          validTypes: ['genome_group', 'feature_group', 'experiment_group'],
+          tooltip: 'Select two or three groups to compare'
+        }, function (selection, containerWidget) {
 
-        var dlg = new Dialog({
-          title: 'Group Comparison',
-          style: 'width: 1250px !important; height: 750px !important;',
-          onHide: function () {
-            dlg.destroy();
-          }
-        });
-        var bc = new BorderContainer({});
-        domConstruct.place(bc.domNode, dlg.containerNode);
-        var stg = new GroupExplore({
-          selection: selection,
-          type: containerWidget.containerType,
-          path: containerWidget.get('path'),
-          containerNode: dlg.containerNode
-        });
-        bc.addChild(stg);
-        dlg.startup();
-        dlg.show();
-      },
+          var dlg = new Dialog({
+            title: 'Group Comparison',
+            style: 'width: 1250px !important; height: 750px !important;',
+            onHide: function () {
+              dlg.destroy();
+            }
+          });
+          var bc = new BorderContainer({});
+          domConstruct.place(bc.domNode, dlg.containerNode);
+          var stg = new GroupExplore({
+            selection: selection,
+            type: containerWidget.containerType,
+            path: containerWidget.get('path'),
+            containerNode: dlg.containerNode
+          });
+          bc.addChild(stg);
+          dlg.startup();
+          dlg.show();
+        },
         false
       );
 
