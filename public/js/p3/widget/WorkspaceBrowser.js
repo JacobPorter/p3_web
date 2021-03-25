@@ -616,7 +616,7 @@ define([
         Topic.publish('/navigate', { href: '/view/PhylogeneticTree/?&labelSearch=' + labelSearch + '&idType=' + idType + '&labelType=genome_name&wsTreeFile=' + encodePath(path[0]) });
       }, false);
 
-      this.actionPanel.addAction('ViewAFA', 'fa icon-tree2 fa-2x', {
+      this.actionPanel.addAction('ViewAFA', 'fa icon-eye fa-2x', {
         label: 'VIEW',
         multiple: false,
         validTypes: ['aligned_dna_fasta', 'aligned_protein_fasta'],
